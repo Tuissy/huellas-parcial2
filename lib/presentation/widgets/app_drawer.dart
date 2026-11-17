@@ -42,73 +42,73 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedIndex = _destinations.indexWhere(
-      (destination) => destination.route == currentRoute,
-    );
+    final scheme = theme.colorScheme;
 
-    return NavigationDrawer(
-      selectedIndex: selectedIndex < 0 ? null : selectedIndex,
-      onDestinationSelected: (index) =>
-          _navigate(context, _destinations[index].route),
-      children: [
-        Container(
-          margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [scheme.primary, scheme.tertiary],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.pets, color: Colors.white, size: 36),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Huellas',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Tu diario personal con fotos, voz y lugares',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.pets, color: Colors.white, size: 36),
-              const SizedBox(height: 12),
-              Text(
-                'Huellas',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+            for (final destination in _destinations)
+              _DrawerTile(
+                icon: destination.route == currentRoute
+                    ? destination.selectedIcon
+                    : destination.icon,
+                label: destination.label,
+                selected: destination.route == currentRoute,
+                onTap: () => _navigate(context, destination.route),
               ),
-              Text(
-                'Tu diario personal con fotos, voz y lugares',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Divider(),
+            ),
+            _DrawerTile(
+              icon: Icons.edit_note,
+              label: 'Nueva entrada',
+              selected: false,
+              onTap: () {
+                Navigator.pop(context);
+                // Al guardar, el formulario regresa directamente a la lista.
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.entryForm,
+                  ModalRoute.withName(AppRoutes.home),
+                );
+              },
+            ),
+          ],
         ),
-        for (final destination in _destinations)
-          NavigationDrawerDestination(
-            icon: Icon(destination.icon),
-            selectedIcon: Icon(destination.selectedIcon),
-            label: Text(destination.label),
-          ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-          child: Divider(),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ListTile(
-            shape: const StadiumBorder(),
-            leading: const Icon(Icons.edit_note),
-            title: const Text('Nueva entrada'),
-            onTap: () {
-              Navigator.pop(context);
-              // Al guardar, el formulario regresa directamente a la lista.
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRoutes.entryForm,
-                ModalRoute.withName(AppRoutes.home),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -141,4 +141,37 @@ class _DrawerDestination {
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+}
+
+/// Opción del menú. `ListTile` recorta con elipsis los textos largos, así
+/// el menú no se desborda con tamaños de letra grandes (accesibilidad).
+class _DrawerTile extends StatelessWidget {
+  const _DrawerTile({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        shape: const StadiumBorder(),
+        selected: selected,
+        selectedColor: scheme.onSecondaryContainer,
+        selectedTileColor: scheme.secondaryContainer,
+        leading: Icon(icon),
+        title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        onTap: onTap,
+      ),
+    );
+  }
 }
