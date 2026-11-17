@@ -35,7 +35,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAwareRefresh {
 
   Future<void> _refresh() async {
     final future = _loadEntries();
-    setState(() => _entriesFuture = future);
+    // Cuerpo de bloque: setState no debe devolver un Future.
+    setState(() {
+      _entriesFuture = future;
+    });
     try {
       await future;
     } catch (_) {
@@ -129,10 +132,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAwareRefresh {
           // 4) Datos: lista con animación escalonada.
           return Column(
             children: [
-              AnimatedOpacity(
-                opacity: isLoading ? 1 : 0,
+              // Recarga en segundo plano: barra fina sobre la lista. Solo
+              // existe mientras carga (un indicador oculto seguiría
+              // animándose y consumiendo batería).
+              AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
-                child: const LinearProgressIndicator(minHeight: 2),
+                child: isLoading
+                    ? const LinearProgressIndicator(minHeight: 2)
+                    : const SizedBox(height: 2),
               ),
               Expanded(
                 child: RefreshIndicator(

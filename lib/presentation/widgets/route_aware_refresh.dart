@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import '../routes/app_router.dart';
@@ -31,8 +33,16 @@ mixin RouteAwareRefresh<T extends StatefulWidget> on State<T>
     super.dispose();
   }
 
+  /// El Navigator invoca este método mientras actualiza su pila interna.
+  /// La recarga se difiere a una microtarea para ejecutarse cuando el
+  /// Navigator ya terminó: así un error en la recarga nunca puede dejar la
+  /// navegación en un estado inconsistente.
   @override
-  void didPopNext() => onReturnToScreen();
+  void didPopNext() {
+    scheduleMicrotask(() {
+      if (mounted) onReturnToScreen();
+    });
+  }
 
   @override
   void didPush() {}

@@ -50,7 +50,15 @@ class _EntryDetailScreenState extends State<EntryDetailScreen>
   }
 
   @override
-  void onReturnToScreen() => setState(() => _entryFuture = _load());
+  void onReturnToScreen() => _reload();
+
+  /// Vuelve a leer la entrada. El cuerpo de setState es un bloque porque
+  /// el callback no debe devolver un Future.
+  void _reload() {
+    setState(() {
+      _entryFuture = _load();
+    });
+  }
 
   Future<void> _edit(DiaryEntry entry) =>
       Navigator.pushNamed(context, AppRoutes.entryForm, arguments: entry);
@@ -116,7 +124,7 @@ class _EntryDetailScreenState extends State<EntryDetailScreen>
               message: error is AppException
                   ? error.message
                   : 'No se pudo cargar.',
-              onRetry: () => setState(() => _entryFuture = _load()),
+              onRetry: _reload,
             ),
           );
         }

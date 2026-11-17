@@ -38,7 +38,15 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
   }
 
   @override
-  void onReturnToScreen() => setState(() => _future = _load());
+  void onReturnToScreen() => _reload();
+
+  /// El cuerpo de setState es un bloque: el callback no debe devolver un
+  /// Future.
+  void _reload() {
+    setState(() {
+      _future = _load();
+    });
+  }
 
   void _showPreview(DiaryEntry entry) {
     showModalBottomSheet<void>(
@@ -72,7 +80,7 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
               message: error is AppException
                   ? error.message
                   : 'No se pudo cargar el mapa.',
-              onRetry: () => setState(() => _future = _load()),
+              onRetry: _reload,
             );
           }
           final entries = snapshot.data ?? const <DiaryEntry>[];

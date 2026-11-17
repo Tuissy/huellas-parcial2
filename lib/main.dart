@@ -40,6 +40,8 @@ void _registerGlobalErrorHandlers() {
   // Errores asíncronos no capturados (Futures, plugins).
   PlatformDispatcher.instance.onError = (error, stack) {
     developer.log('Error no controlado', error: error, stackTrace: stack);
+    // También a la consola (logcat / Xcode) para poder diagnosticarlo.
+    debugPrint('Error no controlado: $error\n$stack');
     return true; // Marcado como manejado: la app sigue viva.
   };
 }
