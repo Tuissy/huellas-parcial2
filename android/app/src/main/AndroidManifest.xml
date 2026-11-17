@@ -1,6 +1,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Mapas (mosaicos de OpenStreetMap) y reconocimiento de voz en línea -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Gadget 1: cámara para fotografiar el día -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Gadget 2: micrófono para el dictado por voz -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Gadget 3: GPS para guardar dónde se escribió la entrada -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Inicio de sesión biométrico -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+
+    <!-- El hardware es opcional: la app se instala aunque falte alguno
+         y maneja su ausencia mostrando un mensaje al usuario. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+
     <application
-        android:label="parcial2"
+        android:label="Huellas"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -40,6 +58,19 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Android 11+: visibilidad del servicio de reconocimiento de voz -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <!-- Android 11+: abrir Google Maps / navegador con url_launcher -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <!-- Android 11+: apps de cámara para image_picker -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
         </intent>
     </queries>
 </manifest>

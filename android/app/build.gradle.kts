@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.example.parcial2"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android 14.1 requiere compilar contra la API 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -42,4 +43,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Tema AppCompat requerido por local_auth en Android 8 o inferior.
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }

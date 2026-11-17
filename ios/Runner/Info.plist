@@ -2,12 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Huellas usa la cámara para que puedas fotografiar tu día.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Huellas accede a tu galería para ilustrar tus entradas con fotos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Huellas usa el micrófono para que dictes el texto de tu diario.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Huellas convierte tu voz en texto para escribir tus entradas.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Huellas guarda dónde escribiste cada entrada para mostrarla en el mapa.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Huellas usa Face ID para proteger tu diario.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Parcial2</string>
+	<string>Huellas</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
