@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Reporte Técnico — Huellas</title>
+<style>
+  @page { size: Letter; margin: 18mm 17mm 18mm 17mm; }
+  :root {
+    --ink: #1b2a2a; --muted: #5b6b6a; --accent: #2a7f7a; --accent-soft: #e3f2f0;
+    --line: #d5e0de; --warn: #b4572e;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+         color: var(--ink); font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1, h2, h3 { color: var(--ink); line-height: 1.25; }
+  h1 { font-size: 20pt; margin: 0 0 6pt; }
+  h2 { font-size: 15pt; margin: 22pt 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid var(--accent); break-after: avoid; }
+  h3 { font-size: 12pt; margin: 14pt 0 6pt; color: var(--accent); break-after: avoid; break-inside: avoid; }
+  p { margin: 0 0 7pt; text-align: justify; }
+  ul, ol { margin: 0 0 8pt 16pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt; background: #f1f5f4; padding: 0 3px; border-radius: 3px; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 8.3pt; background: #f4f7f6; border: 1px solid var(--line);
+        border-radius: 6px; padding: 8pt 10pt; white-space: pre-wrap; break-inside: avoid; margin: 0 0 9pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.3pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 4pt 6pt; vertical-align: top; text-align: left; }
+  th { background: var(--accent-soft); font-weight: 600; }
+  tr { break-inside: avoid; }
+  .page-break { break-before: page; }
+  .muted { color: var(--muted); }
+  .note { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 7pt 10pt; border-radius: 4px; margin: 6pt 0 10pt; break-inside: avoid; }
+  .note.warn { background: #fbefe9; border-color: var(--warn); }
+  figure { margin: 6pt 0 12pt; break-inside: avoid; text-align: center; }
+  figcaption { font-size: 8.8pt; color: var(--muted); margin-top: 4pt; }
+  .diagram { border: 1px solid var(--line); border-radius: 8px; padding: 8pt; background: #fff; }
+  .diagram svg { width: 100%; max-width: 100% !important; height: auto; max-height: 200mm; }
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9pt; margin: 6pt 0 10pt; }
+  .shots.three { grid-template-columns: repeat(3, 1fr); }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; border-radius: 8px; border: 1px solid var(--line); }
+
+  /* Portada */
+  .cover { height: 238mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .band { background: linear-gradient(120deg, #2a7f7a, #3f5f86); color: #fff; border-radius: 16px; padding: 30pt 28pt; }
+  .cover .band h1 { color: #fff; font-size: 34pt; margin: 6pt 0 4pt; }
+  .cover .band .sub { font-size: 14pt; opacity: .92; }
+  .cover .kicker { text-transform: uppercase; letter-spacing: 2px; font-size: 9.5pt; opacity: .85; }
+  .cover dl { display: grid; grid-template-columns: 34% 66%; gap: 6pt 10pt; font-size: 11pt; margin: 0; }
+  .cover dt { color: var(--muted); }
+  .cover dd { margin: 0; border-bottom: 1px dotted var(--line); }
+  .pill { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 1pt 8pt; font-size: 8.8pt; font-weight: 600; margin: 0 4pt 4pt 0; }
+  .toc ol { margin-left: 14pt; }
+  .toc li { margin-bottom: 2pt; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; margin: 8pt 0 12pt; }
+  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 8pt; text-align: center; }
+  .kpi b { display: block; font-size: 17pt; color: var(--accent); }
+  .kpi span { font-size: 8.5pt; color: var(--muted); }
+  .layers { border: 1px solid var(--line); border-radius: 10px; padding: 8pt; }
+  .layer { display: grid; grid-template-columns: 22% 78%; gap: 8pt; border-radius: 8px; padding: 7pt; }
+  .layer.pres { background: #e8f1fb; } .layer.dom { background: #e3f2f0; } .layer.data { background: #fbf1e6; } .layer.core { background: #f1eef8; margin-top: 6pt; }
+  .lname { font-weight: 700; font-size: 11pt; align-self: center; }
+  .lname span { display: block; font-weight: 400; font-size: 8.5pt; color: var(--muted); }
+  .layer .boxes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5pt; }
+  .layer .boxes div { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 4pt 6pt; font-weight: 600; font-size: 9pt; text-align: left; }
+  .layer .boxes small { display: block; font-weight: 400; font-size: 7.8pt; color: var(--muted); line-height: 1.3; }
+  .arrow { text-align: center; font-size: 8.5pt; color: var(--accent); margin: 3pt 0; font-weight: 600; }
+  @page wide { size: Letter landscape; margin: 14mm 16mm; }
+  .landscape { page: wide; }
+  .landscape .diagram svg { max-height: 138mm; }
+  .landscape h2 { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================== PORTADA ============================== -->
+<section class="cover">
+  <div class="band">
+    <div class="kicker">Parcial 2 · Reporte técnico</div>
+    <h1>Huellas</h1>
+    <div class="sub">Diario personal con cámara, dictado por voz, GPS y bloqueo biométrico — Flutter</div>
+  </div>
+
+  <div>
+    <dl>
+      <dt>Alumno</dt><dd>[Nombre completo]</dd>
+      <dt>Matrícula</dt><dd>[Matrícula]</dd>
+      <dt>Materia</dt><dd>[Nombre de la materia]</dd>
+      <dt>Profesor</dt><dd>[Nombre del profesor]</dd>
+      <dt>Repositorio</dt><dd>[Enlace a GitHub / GitLab]</dd>
+      <dt>Fecha</dt><dd>17 de noviembre de 2026</dd>
+    </dl>
+  </div>
+
+  <div class="toc">
+    <h3 style="margin-top:0">Contenido</h3>
+    <ol>
+      <li>Justificación: ¿qué problema resuelve la app?</li>
+      <li>Requerimientos y cómo se cumplen</li>
+      <li>Arquitectura por capas y principios SOLID</li>
+      <li>Diagramas de clases</li>
+      <li>Flujo de datos</li>
+      <li>Navegación, interfaz y animaciones</li>
+      <li>Gadgets: cámara/galería, audio/dictado, GPS/mapas y biometría</li>
+      <li>Persistencia local, asincronía y manejo de errores</li>
+      <li>Pruebas y verificación</li>
+      <li>Ejecución del proyecto, limitaciones y trabajo futuro</li>
+      <li>Anexo: preguntas frecuentes para la defensa</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================== 1. JUSTIFICACIÓN ============================== -->
+<h2 class="page-break">1. Justificación: ¿qué problema resuelve la app?</h2>
+
+<p>Llevar un diario tiene beneficios conocidos —ordenar ideas, reducir el estrés, conservar recuerdos—, pero la mayoría de las
+personas lo abandona pronto. Al analizar por qué, aparecen tres obstáculos concretos:</p>
+<ol>
+  <li><b>Escribir en el teléfono es lento.</b> Al final del día, teclear varios párrafos en una pantalla pequeña es suficiente
+      fricción para no hacerlo.</li>
+  <li><b>Se pierde el contexto.</b> Meses después recordamos <i>qué</i> pasó, pero no <i>dónde</i> ni <i>cómo se veía</i>.
+      Las fotos quedan sueltas en la galería y desconectadas de lo que sentimos ese día.</li>
+  <li><b>La privacidad preocupa.</b> Un diario contiene información íntima; muchas apps lo suben a la nube o no lo protegen
+      si alguien toma el teléfono.</li>
+</ol>
+
+<p><b>Huellas</b> ataca cada obstáculo con el hardware del dispositivo:</p>
+<table>
+  <tr><th style="width:30%">Problema</th><th>Solución en Huellas</th></tr>
+  <tr><td>Escribir es lento</td><td><b>Dictado por voz</b>: el micrófono captura el audio y se transcribe a texto en español; el usuario
+      solo habla y revisa.</td></tr>
+  <tr><td>Se pierde el contexto</td><td><b>Cámara y galería</b> (hasta 4 fotos por entrada) y <b>GPS</b> automático al guardar.
+      Cada recuerdo aparece en un <b>mapa interactivo</b> y puede abrirse en Google Maps.</td></tr>
+  <tr><td>Privacidad</td><td>Todo se guarda <b>solo en el dispositivo</b> (SQLite) y la app puede protegerse con
+      <b>huella, rostro o PIN</b>. La ubicación es opcional por entrada.</td></tr>
+  <tr><td>Registro del estado de ánimo</td><td>Selector de ánimo (😄 🙂 😐 😢 😫) que da color a cada entrada y en el mapa.</td></tr>
+</table>
+
+<p><b>Público objetivo:</b> estudiantes y adultos jóvenes que quieren llevar un diario personal o de viaje sin invertir mucho
+tiempo, y personas con dificultades para teclear (el dictado mejora la accesibilidad).</p>
+
+<div class="kpis">
+  <div class="kpi"><b>56</b><span>archivos Dart en <code>lib/</code></span></div>
+  <div class="kpi"><b>4</b><span>capas: core, domain, data, presentation</span></div>
+  <div class="kpi"><b>19</b><span>pruebas automatizadas (todas pasan)</span></div>
+  <div class="kpi"><b>8</b><span>rutas con nombre</span></div>
+</div>
+
+<h3>Capturas de la aplicación</h3>
+<div class="shots">
+  <figure><img src="img/01_lista.jpg"><figcaption>Lista de diarios (FutureBuilder)</figcaption></figure>
+  <figure><img src="img/02_detalle.jpg"><figcaption>Detalle: foto con Hero, mapa y botón a Google Maps</figcaption></figure>
+  <figure><img src="img/03_formulario.jpg"><figcaption>Formulario: fotos, ánimo, dictado y GPS</figcaption></figure>
+  <figure><img src="img/09_drawer.jpg"><figcaption>Drawer con la sección actual resaltada</figcaption></figure>
+</div>
+
+<!-- ============================== 2. REQUERIMIENTOS ============================== -->
+<h2>2. Requerimientos y cómo se cumplen</h2>
+
+<table>
+  <tr><th style="width:28%">Requerimiento</th><th>Implementación</th><th style="width:30%">Dónde está en el código</th></tr>
+  <tr><td><b>Scaffold, AppBar y Drawer</b></td>
+      <td>Todas las pantallas usan <code>Scaffold</code> + <code>AppBar</code>. Las secciones principales (Mis diarios, Mapa,
+      Ajustes, Acerca de) comparten un <code>Drawer</code> que resalta la sección actual.</td>
+      <td><code>presentation/widgets/app_drawer.dart</code></td></tr>
+  <tr><td><b>Routes y Navigator</b> (lista, detalle, formulario)</td>
+      <td>8 rutas con nombre generadas en <code>onGenerateRoute</code>, que valida los argumentos y muestra una pantalla
+      "no encontrada" en vez de fallar.</td>
+      <td><code>presentation/routes/app_routes.dart</code>, <code>app_router.dart</code></td></tr>
+  <tr><td><b>Transiciones con Hero</b></td>
+      <td>La miniatura de la lista "vuela" a la cabecera del detalle, y de ahí al visor a pantalla completa. Además:
+      transiciones de desvanecido y deslizamiento, animación escalonada de la lista y micro-animaciones.</td>
+      <td><code>entry_card.dart</code>, <code>entry_detail_screen.dart</code>, <code>page_transitions.dart</code></td></tr>
+  <tr><td><b>SQLite</b> para registros y metadatos (rutas de imágenes, coordenadas)</td>
+      <td>Tabla <code>diary_entries</code> con <code>image_paths</code> (arreglo JSON) y <code>latitude/longitude/location_accuracy</code>
+      (REAL). <code>SharedPreferences</code> solo para preferencias (tema y bloqueo).</td>
+      <td><code>data/datasources/diary_database.dart</code>, <code>data/models/diary_entry_model.dart</code></td></tr>
+  <tr><td><b>try-catch y FutureBuilder</b></td>
+      <td>Cada adaptador traduce errores técnicos a <code>AppException</code> con mensaje en español. Lista, detalle, mapa,
+      búsqueda y ajustes cargan con <code>FutureBuilder</code> (estados de carga, error con "Reintentar" y vacío).</td>
+      <td><code>core/errors/app_exception.dart</code>, <code>sqlite_diary_repository.dart</code>, pantallas</td></tr>
+  <tr><td><b>Cámara y galería</b></td>
+      <td><code>image_picker</code>; permiso de cámara con <code>permission_handler</code>; galería con el selector del sistema
+      (sin permiso). Las fotos se copian al directorio privado de la app.</td>
+      <td><code>image_picker_media_service.dart</code>, <code>local_image_storage_service.dart</code></td></tr>
+  <tr><td><b>Audio y dictado</b></td>
+      <td><code>speech_to_text</code> captura el audio del micrófono y lo transcribe en español; medidor de nivel de audio en vivo.</td>
+      <td><code>speech_to_text_service.dart</code>, <code>dictation_button.dart</code></td></tr>
+  <tr><td><b>GPS y mapas</b></td>
+      <td><code>geolocator</code> captura la posición al guardar (tiempo límite de 15 s y respaldo). En el detalle, mapa
+      interactivo (<code>flutter_map</code> + OpenStreetMap) y botón que abre Google Maps (<code>url_launcher</code>).</td>
+      <td><code>geolocator_location_service.dart</code>, <code>location_map.dart</code>, <code>url_maps_launcher.dart</code></td></tr>
+  <tr><td><b>Login biométrico</b> (rúbrica)</td>
+      <td><code>local_auth</code>: pantalla de bloqueo opcional al abrir la app, con huella, rostro o PIN de respaldo.</td>
+      <td><code>lock_screen.dart</code>, <code>local_auth_biometric_service.dart</code></td></tr>
+  <tr><td><b>SOLID, capas, comentarios, commits</b></td>
+      <td>Arquitectura limpia en 4 capas (sección 3), comentarios en español y 12+ commits descriptivos.</td>
+      <td><code>git log</code></td></tr>
+</table>
+
+<h3>Correspondencia con la rúbrica</h3>
+<table>
+  <tr><th style="width:24%">Criterio</th><th>Evidencia de nivel "Sobresaliente"</th></tr>
+  <tr><td>1. Integración de hardware (35 pts)</td>
+      <td>Cámara, galería, micrófono, GPS y biometría integrados en el mismo flujo. Cada permiso tiene tres caminos probados en
+      el emulador: concedido; negado (aviso con SnackBar); bloqueado de forma permanente (diálogo con "Abrir ajustes").
+      El GPS muestra una capa de progreso y, si está apagado, ofrece activarlo o guardar sin ubicación. Ninguna falla de hardware cierra la app.</td></tr>
+  <tr><td>2. UI, navegación y animaciones (30 pts)</td>
+      <td>Scaffold, Drawer y rutas con nombre. Pila de navegación limpia: el Drawer usa <code>pushNamedAndRemoveUntil</code>
+      para que la pila sea siempre <i>[Inicio, Sección]</i>. El Drawer resalta la sección actual. Hero, transiciones personalizadas y animaciones en lista, botones y selector de ánimo.</td></tr>
+  <tr><td>3. Persistencia, asincronía y errores (35 pts)</td>
+      <td>SQLite con esquema versionado, serialización Map/JSON probada (incluidos datos corruptos), <code>FutureBuilder</code>
+      con <code>CircularProgressIndicator</code>, try-catch en cada capa y manejadores globales de errores. Las fotos se copian a almacenamiento
+      permanente, así que sobreviven a reinicios (verificado con un arranque en frío).</td></tr>
+</table>
+
+<!-- ============================== 3. ARQUITECTURA ============================== -->
+<h2 class="page-break">3. Arquitectura por capas y principios SOLID</h2>
+
+<p>El proyecto sigue una <b>arquitectura limpia (Clean Architecture)</b> con dependencias que siempre apuntan hacia el
+dominio. El dominio no importa Flutter, SQLite ni ningún plugin: solo define <i>qué</i> necesita la app mediante interfaces.
+La capa de datos implementa <i>cómo</i> hacerlo, y la presentación consume las interfaces.</p>
+
+<figure>
+  <div class="layers">
+    <div class="layer pres"><div class="lname">presentation<span>Interfaz (Flutter)</span></div>
+      <div class="boxes"><div>Screens<small>Home · Detail · Form · Map · Settings · Lock</small></div>
+        <div>Controllers<small>EntryFormController · SettingsController</small></div>
+        <div>Routes<small>AppRouter · AppRoutes · transiciones</small></div>
+        <div>Widgets<small>AppDrawer · EntryCard · LocationMap</small></div></div></div>
+    <div class="arrow">▼ depende de interfaces del dominio ▼</div>
+    <div class="layer dom"><div class="lname">domain<span>Reglas de negocio · Dart puro</span></div>
+      <div class="boxes"><div>Entities<small>DiaryEntry · GeoLocation · Mood</small></div>
+        <div>Use cases<small>SaveDiaryEntry · DeleteDiaryEntry</small></div>
+        <div style="grid-column: span 2">Interfaces<small>DiaryRepository · SettingsRepository · MediaService · SpeechService · LocationService · BiometricAuthService · PermissionService · ImageStorageService · MapsLauncher</small></div></div></div>
+    <div class="arrow">▲ implementa las interfaces ▲</div>
+    <div class="layer data"><div class="lname">data<span>Implementaciones</span></div>
+      <div class="boxes"><div>SQLite<small>DiaryDatabase · DiaryLocalDataSource · DiaryEntryModel</small></div>
+        <div>Repositorios<small>SqliteDiaryRepository · SharedPrefsSettingsRepository</small></div>
+        <div style="grid-column: span 2">Adaptadores de hardware<small>image_picker · speech_to_text · geolocator · local_auth · url_launcher · permission_handler · path_provider</small></div></div></div>
+    <div class="layer core"><div class="lname">core<span>Transversal</span></div>
+      <div class="boxes"><div style="grid-column: span 2">AppDependencies / AppScope<small>Raíz de composición: crea las clases de <b>data</b> y las entrega a <b>presentation</b></small></div>
+        <div>AppException<small>Jerarquía sellada de errores</small></div>
+        <div>Tema · Fechas<small>AppTheme · DateFormatter</small></div></div></div>
+  </div>
+  <figcaption>Figura 1. Capas del proyecto. Las dependencias de código apuntan siempre hacia el dominio.</figcaption>
+</figure>
+
+<pre>lib/
+├── main.dart, app.dart          ← arranque, manejadores globales de error, MaterialApp
+├── core/        di/  errors/  theme/  utils/
+├── domain/      entities/  repositories/  services/  usecases/      (sin Flutter)
+├── data/        datasources/  models/  repositories/  services/    (SQLite + plugins)
+└── presentation/ controllers/  routes/  screens/  widgets/</pre>
+
+<h3>Principios SOLID aplicados</h3>
+<table>
+  <tr><th style="width:22%">Principio</th><th>Aplicación concreta en Huellas</th></tr>
+  <tr><td><b>S</b> — Responsabilidad única</td>
+      <td><code>DiaryLocalDataSource</code> solo ejecuta SQL; <code>SqliteDiaryRepository</code> convierte modelos y traduce errores;
+      <code>SaveDiaryEntry</code> coordina fotos y registro; <code>EntryFormController</code> contiene la lógica del formulario;
+      las pantallas solo dibujan. <code>AppFeedback</code> centraliza cómo se muestran los errores.</td></tr>
+  <tr><td><b>O</b> — Abierto/Cerrado</td>
+      <td>Para cambiar SQLite por un backend en la nube basta con crear otra clase que implemente <code>DiaryRepository</code>
+      y registrarla en <code>AppDependencies</code>; ninguna pantalla cambia. <code>AppException</code> es una jerarquía <i>sealed</i>:
+      un nuevo tipo de error se agrega como subclase.</td></tr>
+  <tr><td><b>L</b> — Sustitución de Liskov</td>
+      <td>En las pruebas, <code>InMemoryDiaryRepository</code> sustituye a <code>SqliteDiaryRepository</code> y la app funciona igual.
+      Todas las implementaciones respetan el contrato documentado (p. ej. lanzar <code>StorageException</code>).</td></tr>
+  <tr><td><b>I</b> — Segregación de interfaces</td>
+      <td>En lugar de un "HardwareService" gigante hay interfaces pequeñas: <code>MediaService</code>, <code>SpeechService</code>,
+      <code>LocationService</code>, <code>BiometricAuthService</code>, <code>PermissionService</code>, <code>MapsLauncher</code>,
+      <code>ImageStorageService</code>. Cada cliente depende solo de lo que usa.</td></tr>
+  <tr><td><b>D</b> — Inversión de dependencias</td>
+      <td>La presentación y los casos de uso dependen de abstracciones del dominio. Las clases concretas se crean en un único
+      lugar (<code>AppDependencies.create()</code>) y se entregan por medio del <code>InheritedWidget</code> <code>AppScope</code>.</td></tr>
+</table>
+
+<!-- ============================== 4. DIAGRAMAS DE CLASES ============================== -->
+<h2 class="page-break">4. Diagramas de clases</h2>
+
+<h3>4.1 Entidades del dominio y modelo de datos</h3>
+<figure class="diagram"><pre class="mermaid">
+classDiagram
+  direction LR
+  class DiaryEntryModel {
+    +int? id
+    +String mood
+    +List~String~ imagePaths
+    +double? latitude
+    +double? longitude
+    +toMap() Map
+    +fromMap(map)$
+    +toJson() Map
+    +fromJson(json)$
+    +toEntity() DiaryEntry
+    +fromEntity(entry)$
+  }
+  class DiaryEntry {
+    +int? id
+    +String title
+    +String content
+    +Mood mood
+    +DateTime createdAt
+    +DateTime updatedAt
+    +List~String~ imagePaths
+    +GeoLocation? location
+    +copyWith() DiaryEntry
+  }
+  class GeoLocation {
+    +double latitude
+    +double longitude
+    +double? accuracyMeters
+  }
+  class Mood {
+    &lt;&lt;enumeration&gt;&gt;
+    great
+    good
+    neutral
+    sad
+    stressed
+  }
+  DiaryEntryModel ..> DiaryEntry : convierte
+  DiaryEntry *-- GeoLocation
+  DiaryEntry --> Mood
+</pre><figcaption>Figura 2. La entidad es inmutable y no conoce SQLite; el modelo la traduce a Map (SQLite) y JSON.</figcaption></figure>
+
+<h3>4.2 Repositorio, persistencia y casos de uso</h3>
+<figure class="diagram"><pre class="mermaid">
+classDiagram
+  direction LR
+  class SaveDiaryEntry {
+    +call(draft) Future~DiaryEntry~
+  }
+  class DeleteDiaryEntry {
+    +call(entry) Future
+  }
+  class DiaryRepository {
+    &lt;&lt;interface&gt;&gt;
+    +getAll()
+    +getById(id)
+    +search(query)
+    +create(entry)
+    +update(entry)
+    +delete(id)
+    +count()
+  }
+  class ImageStorageService {
+    &lt;&lt;interface&gt;&gt;
+    +persist(path)
+    +delete(path)
+    +toStoredPath(path)
+    +toAbsolutePath(path)
+  }
+  class SqliteDiaryRepository {
+    -_guard(operation, action)
+  }
+  class DiaryLocalDataSource {
+    +findAll()
+    +findById(id)
+    +search(query)
+    +insert(model)
+    +update(model)
+    +delete(id)
+  }
+  class DiaryDatabase {
+    +database Future~Database~
+    -_onCreate()
+    -_onUpgrade()
+  }
+  class LocalImageStorageService
+  SaveDiaryEntry --> DiaryRepository
+  SaveDiaryEntry --> ImageStorageService
+  DeleteDiaryEntry --> DiaryRepository
+  DeleteDiaryEntry --> ImageStorageService
+  DiaryRepository <|.. SqliteDiaryRepository
+  ImageStorageService <|.. LocalImageStorageService
+  SqliteDiaryRepository --> DiaryLocalDataSource
+  SqliteDiaryRepository --> ImageStorageService
+  DiaryLocalDataSource --> DiaryDatabase
+</pre><figcaption>Figura 3. Los casos de uso solo conocen interfaces; SQLite queda encapsulado en la capa de datos.</figcaption></figure>
+
+<h3>4.3 Servicios de hardware (interfaces del dominio e implementaciones)</h3>
+<figure class="diagram"><pre class="mermaid">
+classDiagram
+  direction TB
+  class MediaService {
+    &lt;&lt;interface&gt;&gt;
+    +pickPhoto(source)
+    +recoverLostPhotos()
+  }
+  class SpeechService {
+    &lt;&lt;interface&gt;&gt;
+    +startListening(onResult, onSoundLevel, onStopped, onError)
+    +stopListening()
+    +cancel()
+  }
+  class LocationService {
+    &lt;&lt;interface&gt;&gt;
+    +getCurrentLocation()
+    +openLocationSettings()
+  }
+  class BiometricAuthService {
+    &lt;&lt;interface&gt;&gt;
+    +isAvailable()
+    +authenticate(reason)
+  }
+  class PermissionService {
+    &lt;&lt;interface&gt;&gt;
+    +request(permission)
+    +openAppSettings()
+  }
+  class MapsLauncher {
+    &lt;&lt;interface&gt;&gt;
+    +openLocation(location)
+  }
+  class ImagePickerMediaService
+  class SpeechToTextService
+  class GeolocatorLocationService
+  class LocalAuthBiometricService
+  class HandlerPermissionService
+  class UrlMapsLauncher
+  MediaService <|.. ImagePickerMediaService
+  SpeechService <|.. SpeechToTextService
+  LocationService <|.. GeolocatorLocationService
+  BiometricAuthService <|.. LocalAuthBiometricService
+  PermissionService <|.. HandlerPermissionService
+  MapsLauncher <|.. UrlMapsLauncher
+  ImagePickerMediaService --> PermissionService : cámara
+  SpeechToTextService --> PermissionService : micrófono
+</pre><figcaption>Figura 4. Cada gadget tiene su interfaz en el dominio y su adaptador en la capa de datos.</figcaption></figure>
+
+<h3>4.4 Presentación, errores e inyección de dependencias</h3>
+<figure class="diagram"><pre class="mermaid">
+classDiagram
+  direction LR
+  class AppDependencies {
+    +DiaryRepository diaryRepository
+    +MediaService mediaService
+    +SpeechService speechService
+    +LocationService locationService
+    +BiometricAuthService biometricAuthService
+    +SaveDiaryEntry saveDiaryEntry
+    +create()$ Future~AppDependencies~
+  }
+  class AppScope {
+    &lt;&lt;InheritedWidget&gt;&gt;
+    +of(context)$ AppDependencies
+  }
+  class EntryFormController {
+    &lt;&lt;ChangeNotifier&gt;&gt;
+    +addPhoto(source)
+    +toggleDictation()
+    +captureLocation()
+    +save(location)
+    +FormStatus status
+  }
+  class SettingsController {
+    &lt;&lt;ChangeNotifier&gt;&gt;
+    +setThemePreference()
+    +setBiometricLockEnabled()
+  }
+  class AppRouter {
+    +onGenerateRoute(settings)$
+    +onGenerateInitialRoutes()$
+    +routeObserver$
+  }
+  class RouteAwareRefresh {
+    &lt;&lt;mixin&gt;&gt;
+    +onReturnToScreen()
+  }
+  class AppException {
+    &lt;&lt;sealed&gt;&gt;
+    +String message
+  }
+  class PermissionException
+  class ServiceDisabledException
+  class StorageException
+  class AuthenticationException
+  AppScope o-- AppDependencies
+  EntryFormController --> AppDependencies : usa servicios
+  AppException <|-- PermissionException
+  AppException <|-- ServiceDisabledException
+  AppException <|-- StorageException
+  AppException <|-- AuthenticationException
+  HomeScreen ..|> RouteAwareRefresh
+  EntryDetailScreen ..|> RouteAwareRefresh
+  EntryFormScreen --> EntryFormController
+  AppRouter ..> HomeScreen
+  AppRouter ..> EntryDetailScreen
+  AppRouter ..> EntryFormScreen
+</pre><figcaption>Figura 5. La UI obtiene las dependencias de <code>AppScope</code> y recibe errores tipados.</figcaption></figure>
+
+<!-- ============================== 5. FLUJO DE DATOS ============================== -->
+<div class="landscape">
+<h2>5. Flujo de datos</h2>
+
+<h3>5.1 Crear una entrada (cámara → dictado → GPS → SQLite)</h3>
+<figure class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor U as Usuario
+  participant F as EntryFormScreen
+  participant C as EntryFormController
+  participant M as MediaService
+  participant S as SpeechService
+  participant L as LocationService
+  participant UC as SaveDiaryEntry
+  participant IS as ImageStorage
+  participant R as DiaryRepository
+  participant DB as SQLite
+  U->>F: Toca "Cámara"
+  F->>C: addPhoto(camera)
+  C->>M: pickPhoto()
+  M-->>C: ruta temporal
+  U->>F: Toca el micrófono
+  F->>C: toggleDictation()
+  C->>S: startListening()
+  S-->>C: texto + nivel de audio
+  U->>F: Toca "Guardar"
+  F->>C: captureLocation()
+  Note over F: capa de progreso
+  C->>L: getCurrentLocation() 15 s
+  alt error de GPS o permiso
+    L-->>F: AppException
+    F->>U: diálogo con 3 opciones
+  else éxito
+    L-->>C: GeoLocation
+  end
+  F->>C: save(location)
+  C->>UC: call(DiaryEntryDraft)
+  UC->>IS: persist(foto)
+  IS-->>UC: ruta permanente
+  UC->>R: create(DiaryEntry)
+  R->>DB: INSERT
+  DB-->>R: id
+  R-->>F: DiaryEntry guardada
+  F->>U: SnackBar y vuelve a la lista
+</pre><figcaption>Figura 6. Si el INSERT falla, <code>SaveDiaryEntry</code> borra las copias de fotos (no quedan archivos huérfanos).</figcaption></figure>
+
+</div>
+
+<h3>5.2 Cargar la lista y refrescar al volver</h3>
+<figure class="diagram"><pre class="mermaid">
+sequenceDiagram
+  participant H as HomeScreen
+  participant FB as FutureBuilder
+  participant R as SqliteDiaryRepository
+  participant DS as DiaryLocalDataSource
+  participant DB as SQLite
+  H->>R: getAll()
+  H->>FB: future
+  FB-->>H: waiting → CircularProgressIndicator
+  R->>DS: findAll()
+  DS->>DB: SELECT … ORDER BY created_at DESC
+  DB-->>DS: filas (Map)
+  DS-->>R: DiaryEntryModel.fromMap
+  R-->>FB: lista de DiaryEntry (rutas relativas a absolutas)
+  FB-->>H: done → lista animada / vacío / error + "Reintentar"
+  Note over H: Al cerrar otra pantalla, RouteObserver llama didPopNext → nueva carga
+</pre><figcaption>Figura 7. La pantalla nunca accede a SQLite directamente.</figcaption></figure>
+
+<h3>5.3 Esquema de la base de datos</h3>
+<pre>CREATE TABLE diary_entries (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  title             TEXT    NOT NULL,
+  content           TEXT    NOT NULL,
+  mood              TEXT    NOT NULL,            -- nombre del enum Mood
+  image_paths       TEXT    NOT NULL DEFAULT '[]', -- arreglo JSON de rutas relativas
+  latitude          REAL,                         -- coordenadas GPS (opcionales)
+  longitude         REAL,
+  location_accuracy REAL,                         -- precisión en metros
+  created_at        INTEGER NOT NULL,             -- milisegundos desde epoch
+  updated_at        INTEGER NOT NULL
+);
+CREATE INDEX idx_entries_created_at ON diary_entries (created_at DESC);</pre>
+<p>Ejemplo de fila real leída del emulador:
+<code>1 | Visita al Zocalo | great | ["diary_images/img_1794900617541_3220284084.jpg"] | 37.4219983 | -122.084 | 5.0</code></p>
+<p>Las rutas se guardan <b>relativas</b> al directorio de documentos de la app porque en iOS la ruta absoluta del contenedor cambia
+entre actualizaciones; el repositorio las convierte a absolutas al leerlas.</p>
+
+<!-- ============================== 6. NAVEGACIÓN ============================== -->
+<h2 class="page-break">6. Navegación, interfaz y animaciones</h2>
+
+<figure class="diagram"><pre class="mermaid">
+flowchart LR
+  L["/lock<br/>LockScreen"] -- pushReplacementNamed --> H["/<br/>HomeScreen"]
+  H -- pushNamed + DiaryEntry --> D["/entry<br/>EntryDetailScreen"]
+  H -- pushNamed --> F["/entry/form<br/>EntryFormScreen"]
+  D -- pushNamed + DiaryEntry --> F
+  D -- pushNamed + PhotoViewerArgs --> P["/entry/photo<br/>PhotoViewerScreen"]
+  H -. Drawer · pushNamedAndRemoveUntil .-> M["/map"]
+  H -. Drawer .-> S["/settings"]
+  H -. Drawer .-> A["/about"]
+  M -- pushNamed --> D
+</pre><figcaption>Figura 8. Mapa de rutas con nombre. Las secciones del Drawer siempre quedan encima de Inicio.</figcaption></figure>
+
+<table>
+  <tr><th style="width:22%">Ruta</th><th style="width:22%">Pantalla</th><th>Transición / detalles</th></tr>
+  <tr><td><code>/lock</code></td><td>LockScreen</td><td>Desvanecido. Solo existe si el bloqueo está activo.</td></tr>
+  <tr><td><code>/</code></td><td>HomeScreen</td><td>Raíz. Drawer, búsqueda (SearchDelegate), botón flotante.</td></tr>
+  <tr><td><code>/entry</code></td><td>EntryDetailScreen</td><td><code>FadePageRoute</code> + Hero de la foto. Recibe un <code>DiaryEntry</code>.</td></tr>
+  <tr><td><code>/entry/form</code></td><td>EntryFormScreen</td><td><code>SlideUpPageRoute</code> (sube desde abajo). Sin argumento = crear; con <code>DiaryEntry</code> = editar.</td></tr>
+  <tr><td><code>/entry/photo</code></td><td>PhotoViewerScreen</td><td>Ruta no opaca con Hero y zoom (<code>InteractiveViewer</code>).</td></tr>
+  <tr><td><code>/map</code>, <code>/settings</code>, <code>/about</code></td><td>Secciones</td><td>Se abren desde el Drawer.</td></tr>
+</table>
+
+<h3>Decisiones para una navegación limpia</h3>
+<ul>
+  <li><b>Pila sin "basura":</b> el Drawer usa <code>pushNamedAndRemoveUntil(ruta, ModalRoute.withName('/'))</code>; la pila siempre es
+      <i>[Inicio, Sección]</i> y el botón "atrás" nunca recorre un historial infinito.</li>
+  <li><b>Bloqueo que no se puede saltar:</b> por defecto, Flutter apila <code>/</code> debajo de <code>/lock</code> si la ruta inicial es
+      <code>/lock</code>, y con "atrás" se podría entrar sin autenticarse. <code>onGenerateInitialRoutes</code> crea únicamente la ruta pedida
+      y, al autenticarse, <code>pushReplacementNamed</code> reemplaza el bloqueo.</li>
+  <li><b>El usuario sabe dónde está:</b> título en cada AppBar y la sección actual resaltada en el Drawer.</li>
+  <li><b>Protección de datos:</b> el formulario usa <code>PopScope</code>; si hay cambios sin guardar pregunta "¿Descartar cambios?".</li>
+  <li><b>Datos siempre frescos:</b> el mixin <code>RouteAwareRefresh</code> (con <code>RouteObserver</code>) recarga la lista y el detalle
+      al regresar de otra pantalla.</li>
+</ul>
+
+<h3>Animaciones</h3>
+<ul>
+  <li><b>Hero</b> con la misma etiqueta (<code>entry-{id}-image-{n}</code>) en lista → detalle → visor. Las entradas sin foto usan un
+      degradado con el emoji del ánimo, que también se anima.</li>
+  <li><code>FutureBuilder</code> con <code>initialData</code> en el detalle: la entrada se dibuja desde el primer frame, requisito para que el Hero
+      encuentre su destino mientras se relee de la base de datos.</li>
+  <li>Entrada escalonada de las tarjetas (<code>TweenAnimationBuilder</code> + <code>Interval</code>), <code>AnimatedSwitcher</code>,
+      <code>AnimatedContainer</code>/<code>AnimatedScale</code> en el selector de ánimo, halo del micrófono que crece con el volumen.</li>
+</ul>
+
+<!-- ============================== 7. GADGETS ============================== -->
+<h2>7. Gadgets</h2>
+
+<h3>7.1 Multimedia: cámara y galería</h3>
+<ul>
+  <li><b>Cámara:</b> se solicita <code>Permission.camera</code>. Si se niega se muestra un aviso; si queda bloqueado, un diálogo con
+      <b>"Abrir ajustes"</b>. Después se abre la cámara con <code>image_picker</code> (máx. 1920 px, calidad 85 %).</li>
+  <li><b>Galería:</b> usa el selector de fotos del sistema (Android 13+ / PHPicker en iOS), que <b>no requiere permiso</b>.</li>
+  <li><b>Persistencia real:</b> las fotos llegan a una carpeta temporal; al guardar, <code>LocalImageStorageService</code> las copia a
+      <code>&lt;documentos&gt;/diary_images/</code>. Al editar o borrar, las fotos que se quitan se eliminan del disco.</li>
+  <li><b>Android puede destruir la app</b> mientras la cámara está abierta (poca memoria); <code>recoverLostPhotos()</code> recupera la foto con
+      <code>retrieveLostData()</code>.</li>
+</ul>
+
+<h3>7.2 Audio y dictado por voz</h3>
+<p><code>speech_to_text</code> abre el <b>micrófono</b>, captura el audio y lo envía al reconocedor del sistema (SpeechRecognizer en
+Android, SFSpeechRecognizer en iOS). Antes se piden los permisos de micrófono (y de reconocimiento de voz en iOS). Se elige
+automáticamente un idioma español (preferencia <code>es_MX</code>). La interfaz muestra:</p>
+<ul>
+  <li>Resultados parciales en tiempo real, que se agregan al final del texto ya escrito.</li>
+  <li>Un <b>medidor de nivel de audio</b> normalizado (0–1) y un halo animado: evidencia visual de la captura de audio.</li>
+  <li>Errores traducidos ("No se detectó voz", "Se necesita internet"…) sin interrumpir el formulario.</li>
+</ul>
+
+<h3>7.3 Geolocalización y mapas</h3>
+<ol>
+  <li>¿GPS encendido? Si no, <code>ServiceDisabledException</code> → diálogo "Activar ubicación".</li>
+  <li>Permiso de ubicación (negado / bloqueado → diálogo con "Abrir ajustes").</li>
+  <li>Posición de alta precisión con <b>tiempo límite de 15 s</b>; si se agota, se usa la <b>última posición conocida</b>.</li>
+  <li>Mientras tanto, una capa de progreso informa "Obteniendo tu ubicación GPS…".</li>
+  <li>Si nada funciona, el usuario elige entre <b>Reintentar</b>, <b>Abrir ajustes</b> o <b>Guardar sin ubicación</b>.</li>
+</ol>
+<p>En el detalle se muestra un <b>mapa interactivo</b> (<code>flutter_map</code> + mosaicos de OpenStreetMap, sin clave de API) con marcador,
+círculo de precisión y botón para centrar, además del botón <b>"Abrir en Google Maps"</b>
+(<code>https://www.google.com/maps/search/?api=1&amp;query=lat,lng</code>). La sección "Mapa de recuerdos" muestra todas las entradas.</p>
+
+<h3>7.4 Inicio de sesión biométrico</h3>
+<p>Desde Ajustes se activa el bloqueo; para activarlo o desactivarlo hay que autenticarse primero (demuestra que el dispositivo tiene
+credenciales y que quien lo cambia es el dueño). Con <code>local_auth</code> se permite huella o rostro, con PIN/patrón de respaldo. Cada código de error
+(<code>temporaryLockout</code>, <code>noCredentialsSet</code>…) se traduce a un mensaje claro. Si el usuario quita todas las credenciales del
+teléfono, la app no lo deja fuera de sus datos: explica la situación y desactiva el bloqueo.</p>
+
+<div class="shots">
+  <figure><img src="img/04_dictado.jpg"><figcaption>Dictado: escuchando con medidor de audio</figcaption></figure>
+  <figure><img src="img/05_gps_progreso.jpg"><figcaption>Retroalimentación mientras responde el GPS</figcaption></figure>
+  <figure><img src="img/06_permiso_bloqueado.jpg"><figcaption>Permiso de cámara bloqueado → "Abrir ajustes"</figcaption></figure>
+  <figure><img src="img/07_gps_apagado.jpg"><figcaption>GPS apagado: tres salidas, sin crash</figcaption></figure>
+</div>
+
+<!-- ============================== 8. PERSISTENCIA ============================== -->
+<h2>8. Persistencia local, asincronía y manejo de errores</h2>
+
+<h3>SQLite vs. SharedPreferences</h3>
+<p>Los diarios son registros estructurados que se ordenan, buscan y actualizan: van en <b>SQLite</b>
+(<code>sqflite</code>). <b>SharedPreferences</b> (<code>SharedPreferencesWithCache</code>) guarda solo dos preferencias simples:
+el tema y si el bloqueo biométrico está activo. Cada dato está en el almacenamiento adecuado.</p>
+
+<h3>Serialización</h3>
+<p><code>DiaryEntryModel</code> convierte la entidad en tres formatos: <code>toMap/fromMap</code> (fila SQLite, con <code>image_paths</code> como
+JSON), <code>toJson/fromJson</code> (fechas ISO-8601 y ubicación anidada, útil para respaldos) y <code>toEntity/fromEntity</code>. Si una fila
+está corrupta (JSON inválido o un ánimo desconocido), se carga igualmente con valores seguros en lugar de romper toda la lista.</p>
+
+<h3>Manejo de errores en capas</h3>
+<table style="break-inside: avoid">
+  <tr><th style="width:20%">Capa</th><th>Estrategia</th></tr>
+  <tr><td>Data</td><td>try-catch en cada adaptador; <code>PlatformException</code>, <code>DatabaseException</code>,
+      <code>TimeoutException</code> o <code>FileSystemException</code> se convierten en una <code>AppException</code> con mensaje en español.
+      El repositorio usa un método <code>_guard()</code> que además registra el error con <code>developer.log</code>.</td></tr>
+  <tr><td>Domain</td><td>Validaciones (<code>ValidationException</code>) y reversión: si el INSERT falla, se borran las fotos copiadas.</td></tr>
+  <tr><td>Presentation</td><td><code>FutureBuilder</code> con tres estados (carga, error con "Reintentar", vacío). <code>AppFeedback.showError</code>
+      decide entre SnackBar o diálogo según el tipo de excepción (<i>pattern matching</i> sobre la clase sellada).</td></tr>
+  <tr><td>Global</td><td><code>FlutterError.onError</code> y <code>PlatformDispatcher.onError</code> registran cualquier error no previsto. Si la app no
+      puede iniciarse (p. ej. sin espacio), muestra una pantalla con "Reintentar" en lugar de cerrarse.</td></tr>
+</table>
+
+<div class="shots three">
+  <figure><img src="img/11_cargando.jpg"><figcaption>Carga asíncrona con CircularProgressIndicator</figcaption></figure>
+  <figure><img src="img/08_mapa.jpg"><figcaption>Mapa de recuerdos con vista previa</figcaption></figure>
+  <figure><img src="img/10_modo_oscuro.jpg"><figcaption>Tema oscuro (preferencia en SharedPreferences)</figcaption></figure>
+</div>
+
+<!-- ============================== 9. PRUEBAS ============================== -->
+<h2 class="page-break">9. Pruebas y verificación</h2>
+
+<h3>Pruebas automatizadas (<code>flutter test</code>: 19/19 correctas)</h3>
+<table>
+  <tr><th style="width:36%">Archivo</th><th>Qué verifica</th></tr>
+  <tr><td><code>test/data/diary_entry_model_test.dart</code></td><td>Ida y vuelta Map/JSON, rutas como arreglo JSON, coordenadas, datos corruptos.</td></tr>
+  <tr><td><code>test/data/sqlite_diary_repository_test.dart</code></td><td>SQLite real en memoria (<code>sqflite_common_ffi</code>): orden, búsqueda, actualizar, borrar, rutas relativas y GPS.</td></tr>
+  <tr><td><code>test/domain/save_diary_entry_test.dart</code></td><td>Validación de título, copia de fotos, borrado de fotos quitadas y reversión ante fallos.</td></tr>
+  <tr><td><code>test/presentation/navigation_test.dart</code></td><td>Carga con FutureBuilder, lista → detalle → atrás, eliminar y volver, Drawer → Ajustes → atrás.</td></tr>
+</table>
+
+<h3>Pruebas manuales en el emulador (Pixel 8, Android 17 / API 37)</h3>
+<ul>
+  <li>Permiso de cámara negado una vez (SnackBar) y bloqueado (diálogo "Abrir ajustes"); después concedido y foto tomada.</li>
+  <li>Permisos de micrófono y ubicación; dictado en <code>es-ES</code> con indicador de micrófono activo del sistema.</li>
+  <li>GPS apagado → diálogo con tres opciones; GPS encendido → entrada guardada con coordenadas.</li>
+  <li>Galería mediante el selector del sistema, edición (cambio de portada) y verificación de que la foto quitada se borró del disco.</li>
+  <li>Reinicio en frío de la app: entradas y fotos siguen disponibles (fila verificada con <code>sqlite3</code>).</li>
+  <li>Google Maps se abre con las coordenadas; búsqueda, mapa de recuerdos, tema oscuro y eliminación.</li>
+</ul>
+
+<div class="note warn"><b>Defecto encontrado y corregido durante las pruebas.</b> Tres pantallas recargaban sus datos con
+<code>setState(() =&gt; _future = _load())</code>. La función flecha <i>devuelve</i> el Future y, en modo debug, Flutter lanza una aserción.
+Como ocurría dentro de <code>didPopNext</code> (mientras el Navigator actualiza su pila), el Navigator quedaba bloqueado: al eliminar
+una entrada el detalle no se cerraba y "atrás" cerraba la app. Se corrigió usando un cuerpo de bloque en <code>setState</code> y difiriendo la
+recarga a una microtarea. Se agregó una prueba de regresión que falla con el defecto y pasa con la corrección.</div>
+
+<!-- ============================== 10. EJECUCIÓN ============================== -->
+<h2>10. Ejecución, limitaciones y trabajo futuro</h2>
+<pre>flutter pub get
+flutter test                 # 19 pruebas
+flutter run                  # emulador o teléfono Android (recomendado: dispositivo físico)</pre>
+<p><b>Requisitos:</b> Flutter 3.44 (Dart 3.12), Android SDK 37 para compilar (minSdk 24). Para probar la biometría en el emulador hay
+que registrar un PIN y una huella en <i>Ajustes → Seguridad</i>. El dictado y los mosaicos del mapa requieren internet; el
+resto funciona sin conexión.</p>
+<p><b>Limitaciones y trabajo futuro:</b> bloquear de nuevo al volver de segundo plano; cifrar la base de datos (SQLCipher); nombre del
+lugar (geocodificación inversa); grabar y reproducir notas de voz además de transcribirlas; respaldo/exportación del diario en JSON.</p>
+
+<!-- ============================== ANEXO ============================== -->
+<h2 class="page-break">Anexo: preguntas frecuentes para la defensa</h2>
+<table>
+  <tr><th style="width:34%">Pregunta</th><th>Respuesta breve</th></tr>
+  <tr><td>¿Por qué SQLite y no solo SharedPreferences?</td><td>Los diarios son registros con consultas (ordenar, buscar con <code>LIKE</code>, actualizar por id). SharedPreferences es clave-valor; se usa solo para preferencias.</td></tr>
+  <tr><td>¿Dónde se guardan las fotos? ¿Sobreviven a un reinicio?</td><td>Se copian a <code>documentos/diary_images</code> y en la BD se guarda la ruta relativa como JSON. Sí: se verificó con un arranque en frío.</td></tr>
+  <tr><td>¿Qué pasa si el usuario niega un permiso?</td><td>La primera vez se muestra un aviso; si queda bloqueado, un diálogo lleva a Ajustes. Nunca se cierra la app.</td></tr>
+  <tr><td>¿Y si el GPS tarda o está apagado?</td><td>Capa de progreso, tiempo límite de 15 s, respaldo con la última posición conocida y opción de guardar sin ubicación.</td></tr>
+  <tr><td>¿Dónde está la captura de audio?</td><td><code>SpeechToTextService</code>: abre el micrófono mediante <code>speech_to_text</code>; el nivel de audio en vivo alimenta el medidor del formulario.</td></tr>
+  <tr><td>¿Cómo funciona el Hero?</td><td>Misma etiqueta en el origen y el destino; el detalle se dibuja desde el primer frame gracias a <code>initialData</code>.</td></tr>
+  <tr><td>¿Cómo se evita que la pila se ensucie?</td><td><code>pushNamedAndRemoveUntil</code> en el Drawer, <code>pushReplacementNamed</code> tras el bloqueo y <code>onGenerateInitialRoutes</code>.</td></tr>
+  <tr><td>¿Dónde aplicas inversión de dependencias?</td><td>Las pantallas piden interfaces a <code>AppScope</code>; las clases concretas solo se crean en <code>AppDependencies.create()</code>. Por eso las pruebas usan fakes.</td></tr>
+  <tr><td>¿Es seguro el login biométrico?</td><td>Usa la API del sistema (las huellas nunca llegan a la app). Activarlo o desactivarlo exige autenticarse, y no se puede saltar con "atrás".</td></tr>
+  <tr><td>¿Qué pasa si falla la base de datos?</td><td>El repositorio lanza <code>StorageException</code> con mensaje; la UI lo muestra con "Reintentar"; las fotos copiadas se revierten.</td></tr>
+</table>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: false,
+    // IDs únicos y estables: sin esto, en Chrome sin interfaz (reloj virtual)
+    // varios diagramas recibían el mismo ID y sus estilos se mezclaban.
+    deterministicIds: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e3f2f0', primaryBorderColor: '#2a7f7a', primaryTextColor: '#1b2a2a',
+      lineColor: '#4b6463', fontFamily: '-apple-system, Helvetica, Arial, sans-serif', fontSize: '16px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' },
+    sequence: { mirrorActors: false, actorMargin: 14, width: 105, boxMargin: 6,
+                messageFontSize: 17, actorFontSize: 15, noteFontSize: 15 },
+  });
+  await mermaid.run({ querySelector: '.mermaid' });
+  document.body.dataset.rendered = 'true';
+</script>
+</body>
+</html>
