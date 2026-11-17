@@ -38,8 +38,8 @@ class AppDependencies {
     required this.locationService,
     required this.biometricAuthService,
     required this.mapsLauncher,
-  })  : saveDiaryEntry = SaveDiaryEntry(diaryRepository, imageStorage),
-        deleteDiaryEntry = DeleteDiaryEntry(diaryRepository, imageStorage);
+  }) : saveDiaryEntry = SaveDiaryEntry(diaryRepository, imageStorage),
+       deleteDiaryEntry = DeleteDiaryEntry(diaryRepository, imageStorage);
 
   final DiaryRepository diaryRepository;
   final SettingsRepository settingsRepository;
@@ -82,11 +82,7 @@ class AppDependencies {
 ///
 /// Uso: `AppScope.of(context).diaryRepository`.
 class AppScope extends InheritedWidget {
-  const AppScope({
-    super.key,
-    required this.dependencies,
-    required super.child,
-  });
+  const AppScope({super.key, required this.dependencies, required super.child});
 
   final AppDependencies dependencies;
 

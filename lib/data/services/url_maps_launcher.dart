@@ -13,13 +13,10 @@ class UrlMapsLauncher implements MapsLauncher {
   /// URL universal documentada por Google: abre la app de Google Maps si
   /// está instalada o, si no, la versión web.
   static Uri buildUri(GeoLocation location) => Uri.https(
-        'www.google.com',
-        '/maps/search/',
-        {
-          'api': '1',
-          'query': '${location.latitude},${location.longitude}',
-        },
-      );
+    'www.google.com',
+    '/maps/search/',
+    {'api': '1', 'query': '${location.latitude},${location.longitude}'},
+  );
 
   @override
   Future<void> openLocation(GeoLocation location) async {

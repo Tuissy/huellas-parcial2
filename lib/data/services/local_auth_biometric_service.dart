@@ -12,7 +12,7 @@ import '../../domain/services/biometric_auth_service.dart';
 /// huella falla o el sensor no está disponible.
 class LocalAuthBiometricService implements BiometricAuthService {
   LocalAuthBiometricService({LocalAuthentication? auth})
-      : _auth = auth ?? LocalAuthentication();
+    : _auth = auth ?? LocalAuthentication();
 
   final LocalAuthentication _auth;
 
@@ -72,7 +72,10 @@ class LocalAuthBiometricService implements BiometricAuthService {
       }
     } catch (error) {
       developer.log('Error inesperado de local_auth', error: error);
-      throw AuthenticationException('No se pudo completar la autenticación.', error);
+      throw AuthenticationException(
+        'No se pudo completar la autenticación.',
+        error,
+      );
     }
   }
 }

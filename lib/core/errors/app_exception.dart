@@ -30,18 +30,19 @@ sealed class AppException implements Exception {
   final Object? cause;
 
   @override
-  String toString() => '$runtimeType: $message${cause != null ? ' ($cause)' : ''}';
+  String toString() =>
+      '$runtimeType: $message${cause != null ? ' ($cause)' : ''}';
 }
 
 /// El usuario negó un permiso del sistema.
 class PermissionException extends AppException {
   PermissionException(this.feature, {this.permanentlyDenied = false})
-      : super(
-          permanentlyDenied
-              ? 'El permiso para usar ${feature.label} está bloqueado. '
+    : super(
+        permanentlyDenied
+            ? 'El permiso para usar ${feature.label} está bloqueado. '
                   'Puedes activarlo desde los ajustes del dispositivo.'
-              : 'Necesitamos permiso para usar ${feature.label}.',
-        );
+            : 'Necesitamos permiso para usar ${feature.label}.',
+      );
 
   final DeviceFeature feature;
 
@@ -53,15 +54,20 @@ class PermissionException extends AppException {
 /// Un servicio del sistema está apagado (por ejemplo, el GPS).
 class ServiceDisabledException extends AppException {
   ServiceDisabledException(this.feature)
-      : super('${_capitalize(feature.label)} está desactivada en el dispositivo.');
+    : super(
+        '${_capitalize(feature.label)} está desactivada en el dispositivo.',
+      );
 
   final DeviceFeature feature;
 }
 
 /// El hardware no existe, no responde o el servicio no está disponible.
 class HardwareUnavailableException extends AppException {
-  const HardwareUnavailableException(this.feature, String message, [Object? cause])
-      : super(message, cause);
+  const HardwareUnavailableException(
+    this.feature,
+    String message, [
+    Object? cause,
+  ]) : super(message, cause);
 
   final DeviceFeature feature;
 }
@@ -69,8 +75,10 @@ class HardwareUnavailableException extends AppException {
 /// El GPS no obtuvo una posición dentro del tiempo límite.
 class LocationTimeoutException extends AppException {
   const LocationTimeoutException()
-      : super('No se pudo obtener la ubicación a tiempo. '
-            'Intenta en un lugar con mejor señal GPS.');
+    : super(
+        'No se pudo obtener la ubicación a tiempo. '
+        'Intenta en un lugar con mejor señal GPS.',
+      );
 }
 
 /// Error al leer o escribir en la base de datos o en el sistema de archivos.

@@ -12,9 +12,7 @@ import '../../domain/services/location_service.dart';
 /// Flujo: servicio encendido → permiso → posición precisa con tiempo
 /// límite → si se agota, última posición conocida como respaldo.
 class GeolocatorLocationService implements LocationService {
-  const GeolocatorLocationService({
-    this.timeout = const Duration(seconds: 15),
-  });
+  const GeolocatorLocationService({this.timeout = const Duration(seconds: 15)});
 
   /// Tiempo máximo de espera por una posición nueva.
   final Duration timeout;
@@ -34,7 +32,10 @@ class GeolocatorLocationService implements LocationService {
       throw PermissionException(DeviceFeature.location);
     }
     if (permission == geo.LocationPermission.deniedForever) {
-      throw PermissionException(DeviceFeature.location, permanentlyDenied: true);
+      throw PermissionException(
+        DeviceFeature.location,
+        permanentlyDenied: true,
+      );
     }
 
     try {
@@ -68,8 +69,8 @@ class GeolocatorLocationService implements LocationService {
   Future<bool> openLocationSettings() => geo.Geolocator.openLocationSettings();
 
   GeoLocation _toGeoLocation(geo.Position position) => GeoLocation(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracyMeters: position.accuracy,
-      );
+    latitude: position.latitude,
+    longitude: position.longitude,
+    accuracyMeters: position.accuracy,
+  );
 }

@@ -11,7 +11,7 @@ import '../../domain/services/permission_service.dart';
 /// Cámara y galería mediante el paquete image_picker.
 class ImagePickerMediaService implements MediaService {
   ImagePickerMediaService(this._permissions, {ImagePicker? picker})
-      : _picker = picker ?? ImagePicker();
+    : _picker = picker ?? ImagePicker();
 
   final PermissionService _permissions;
   final ImagePicker _picker;
@@ -22,8 +22,9 @@ class ImagePickerMediaService implements MediaService {
 
   @override
   Future<String?> pickPhoto(PhotoSource source) async {
-    final feature =
-        source == PhotoSource.camera ? DeviceFeature.camera : DeviceFeature.gallery;
+    final feature = source == PhotoSource.camera
+        ? DeviceFeature.camera
+        : DeviceFeature.gallery;
 
     // La galería usa el selector de fotos del sistema (Android 13+ / iOS
     // PHPicker), que no requiere permiso. La cámara sí lo requiere.
@@ -67,7 +68,10 @@ class ImagePickerMediaService implements MediaService {
     }
   }
 
-  AppException _mapPlatformError(PlatformException error, DeviceFeature feature) {
+  AppException _mapPlatformError(
+    PlatformException error,
+    DeviceFeature feature,
+  ) {
     switch (error.code) {
       case 'camera_access_denied':
       case 'photo_access_denied':

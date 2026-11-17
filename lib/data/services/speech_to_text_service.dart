@@ -16,7 +16,7 @@ import '../../domain/services/speech_service.dart';
 /// SFSpeechRecognizer en iOS), que devuelve el texto transcrito.
 class SpeechToTextService implements SpeechService {
   SpeechToTextService(this._permissions, {stt.SpeechToText? speech})
-      : _speech = speech ?? stt.SpeechToText();
+    : _speech = speech ?? stt.SpeechToText();
 
   final PermissionService _permissions;
   final stt.SpeechToText _speech;
@@ -135,7 +135,8 @@ class SpeechToTextService implements SpeechService {
       // Prioridad: México, luego cualquier variante de español.
       return spanish
           .firstWhere(
-            (locale) => locale.localeId.toLowerCase().replaceAll('-', '_') == 'es_mx',
+            (locale) =>
+                locale.localeId.toLowerCase().replaceAll('-', '_') == 'es_mx',
             orElse: () => spanish.first,
           )
           .localeId;

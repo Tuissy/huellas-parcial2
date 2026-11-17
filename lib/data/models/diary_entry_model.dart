@@ -138,10 +138,12 @@ class DiaryEntryModel {
               'longitude': longitude,
               'accuracy': locationAccuracy,
             },
-      'createdAt':
-          DateTime.fromMillisecondsSinceEpoch(createdAtMillis).toIso8601String(),
-      'updatedAt':
-          DateTime.fromMillisecondsSinceEpoch(updatedAtMillis).toIso8601String(),
+      'createdAt': DateTime.fromMillisecondsSinceEpoch(
+        createdAtMillis,
+      ).toIso8601String(),
+      'updatedAt': DateTime.fromMillisecondsSinceEpoch(
+        updatedAtMillis,
+      ).toIso8601String(),
     };
   }
 

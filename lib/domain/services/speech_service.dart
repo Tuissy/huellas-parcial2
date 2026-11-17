@@ -1,6 +1,7 @@
 /// Callback con el texto reconocido. [isFinal] indica que el motor terminó
 /// de procesar la frase.
-typedef SpeechResultCallback = void Function(String recognizedText, bool isFinal);
+typedef SpeechResultCallback =
+    void Function(String recognizedText, bool isFinal);
 
 /// Dictado por voz: captura audio del micrófono y lo transcribe a texto.
 abstract interface class SpeechService {

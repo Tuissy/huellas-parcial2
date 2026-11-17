@@ -12,8 +12,8 @@ import '../../core/errors/app_exception.dart';
 /// una ruta en memoria.
 class DiaryDatabase {
   DiaryDatabase({DatabaseFactory? factory, String? path})
-      : _factory = factory ?? databaseFactory,
-        _customPath = path;
+    : _factory = factory ?? databaseFactory,
+      _customPath = path;
 
   static const String fileName = 'huellas.db';
   static const int version = 1;
