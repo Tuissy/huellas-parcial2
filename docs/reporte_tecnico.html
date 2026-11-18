@@ -645,9 +645,12 @@ flowchart LR
 <h3>7.2 Audio y dictado por voz</h3>
 <p><code>speech_to_text</code> abre el <b>micrófono</b>, captura el audio y lo envía al reconocedor del sistema (SpeechRecognizer en
 Android, SFSpeechRecognizer en iOS). Antes se piden los permisos de micrófono (y de reconocimiento de voz en iOS). Se elige
-automáticamente un idioma español (preferencia <code>es_MX</code>). La interfaz muestra:</p>
+automáticamente un idioma español: primero <code>es_MX</code> y, si el reconocedor no lo ofrece, español latinoamericano
+(<code>es_US</code> o <code>es_419</code>). La interfaz muestra:</p>
 <ul>
   <li>Resultados parciales en tiempo real, que se agregan al final del texto ya escrito.</li>
+  <li>Una espera inicial de <b>10 s</b> para empezar a hablar; en cuanto llegan las primeras palabras, <b>5 s</b> de silencio
+      terminan el dictado (o el usuario lo detiene tocando el botón).</li>
   <li>Un <b>medidor de nivel de audio</b> normalizado (0–1) y un halo animado: evidencia visual de la captura de audio.</li>
   <li>Errores traducidos ("No se detectó voz", "Se necesita internet"…) sin interrumpir el formulario.</li>
 </ul>
