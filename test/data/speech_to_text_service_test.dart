@@ -174,7 +174,7 @@ void main() {
     expect(service.isListening, isTrue);
     expect(stoppedCalls, 0);
 
-    engine.emit('y comí tacos', isFinal: true);
+    engine.emit('y estudié en la biblioteca', isFinal: true);
     engine.closeSession();
     await settle();
     expect(engine.sessions, hasLength(3));
@@ -185,7 +185,7 @@ void main() {
     expect(engine.sessions, hasLength(3));
     expect(stoppedCalls, 1);
     expect(service.isListening, isFalse);
-    expect(finalTexts(), ['hoy fui a clase', 'y comí tacos']);
+    expect(finalTexts(), ['hoy fui a clase', 'y estudié en la biblioteca']);
     expect(errors, isEmpty);
   });
 

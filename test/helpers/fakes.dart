@@ -142,7 +142,7 @@ class FakeSpeechService implements SpeechService {
 }
 
 class FakeLocationService implements LocationService {
-  GeoLocation location = const GeoLocation(latitude: 19.43, longitude: -99.13);
+  GeoLocation location = const GeoLocation(latitude: 21.1112, longitude: -89.6124);
 
   @override
   Future<GeoLocation> getCurrentLocation() async => location;

@@ -8,15 +8,15 @@ void main() {
   final created = DateTime(2026, 11, 17, 9, 30);
   final entry = DiaryEntry(
     id: 7,
-    title: 'Visita al Zócalo',
-    content: 'Probé unos tacos buenísimos.',
+    title: 'Presentación en la Anáhuac Mayab',
+    content: 'Presenté el avance de Huellas en clase.',
     mood: Mood.great,
     createdAt: created,
     updatedAt: created.add(const Duration(hours: 1)),
     imagePaths: const ['diary_images/a.jpg', 'diary_images/b.jpg'],
     location: const GeoLocation(
-      latitude: 19.4326,
-      longitude: -99.1332,
+      latitude: 21.1112,
+      longitude: -89.6124,
       accuracyMeters: 8.5,
     ),
   );
@@ -26,8 +26,8 @@ void main() {
       final map = DiaryEntryModel.fromEntity(entry).toMap();
 
       expect(map['image_paths'], '["diary_images/a.jpg","diary_images/b.jpg"]');
-      expect(map['latitude'], 19.4326);
-      expect(map['longitude'], -99.1332);
+      expect(map['latitude'], 21.1112);
+      expect(map['longitude'], -89.6124);
       expect(map['mood'], 'great');
       expect(map['created_at'], created.millisecondsSinceEpoch);
     });
@@ -66,7 +66,7 @@ void main() {
     test('ida y vuelta JSON conserva ubicación anidada y fechas ISO', () {
       final json = DiaryEntryModel.fromEntity(entry).toJsonString();
       expect(json, contains('"createdAt":"2026-11-17T09:30:00.000"'));
-      expect(json, contains('"location":{"latitude":19.4326'));
+      expect(json, contains('"location":{"latitude":21.1112'));
 
       final restored = DiaryEntryModel.fromJsonString(json).toEntity();
       expect(restored.location, entry.location);

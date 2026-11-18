@@ -65,8 +65,8 @@ void main() {
 
   test('persiste y recupera las coordenadas GPS', () async {
     const location = GeoLocation(
-      latitude: 19.4326,
-      longitude: -99.1332,
+      latitude: 21.1112,
+      longitude: -89.6124,
       accuracyMeters: 5,
     );
     final saved = await repository.create(
@@ -77,11 +77,11 @@ void main() {
   });
 
   test('busca por título o contenido', () async {
-    await repository.create(entry('Tacos', DateTime(2026)));
-    await repository.create(entry('Parque', DateTime(2026)));
+    await repository.create(entry('Biblioteca', DateTime(2026)));
+    await repository.create(entry('Cafetería', DateTime(2026)));
 
-    final results = await repository.search('taco');
-    expect(results.single.title, 'Tacos');
+    final results = await repository.search('biblio');
+    expect(results.single.title, 'Biblioteca');
   });
 
   test('actualiza y elimina', () async {
