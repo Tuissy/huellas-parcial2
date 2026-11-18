@@ -79,88 +79,212 @@ class _HomeScreenState extends State<HomeScreen> with RouteAwareRefresh {
         icon: const Icon(Icons.edit_note),
         label: const Text('Nueva entrada'),
       ),
-      body: FutureBuilder<List<DiaryEntry>>(
-        future: _entriesFuture,
-        builder: (context, snapshot) {
-          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+      body: _buildContent(),
+    );
+  }
 
-          // 1) Primera carga: indicador de progreso.
-          if (isLoading && !snapshot.hasData) {
-            return const LoadingView(message: 'Cargando tus diarios…');
-          }
+  Widget _buildContent() {
+    return FutureBuilder<List<DiaryEntry>>(
+      future: _entriesFuture,
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
 
-          // 2) Error: mensaje claro y botón de reintento (sin crash).
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            return ErrorView(
-              message: error is AppException
-                  ? error.message
-                  : 'No pudimos cargar tus diarios.',
-              onRetry: _refresh,
-            );
-          }
+        // 1) Primera carga: indicador de progreso.
+        if (isLoading && !snapshot.hasData) {
+          return const LoadingView(message: 'Cargando tus diarios…');
+        }
 
-          final entries = snapshot.data ?? const <DiaryEntry>[];
+        // 2) Error: mensaje claro y botón de reintento (sin crash).
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          return ErrorView(
+            message: error is AppException
+                ? error.message
+                : 'No pudimos cargar tus diarios.',
+            onRetry: _refresh,
+          );
+        }
 
-          // 3) Sin datos: estado vacío con llamada a la acción.
-          if (entries.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: _refresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.7,
-                    child: EmptyView(
-                      icon: Icons.auto_stories_outlined,
-                      title: 'Tu diario está vacío',
-                      message:
-                          'Escribe o dicta cómo fue tu día, añade una foto '
-                          'y guardaremos dónde estabas.',
-                      action: FilledButton.icon(
-                        onPressed: _openForm,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Escribir mi primera entrada'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
+        final entries = snapshot.data ?? const <DiaryEntry>[];
 
-          // 4) Datos: lista con animación escalonada.
-          return Column(
-            children: [
-              // Recarga en segundo plano: barra fina sobre la lista. Solo
-              // existe mientras carga (un indicador oculto seguiría
-              // animándose y consumiendo batería).
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: isLoading
-                    ? const LinearProgressIndicator(minHeight: 2)
-                    : const SizedBox(height: 2),
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                    itemCount: entries.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => _StaggeredEntrance(
-                      index: index,
-                      child: EntryCard(
-                        entry: entries[index],
-                        onTap: () => _openDetail(entries[index]),
-                      ),
+        // 3) Sin datos: estado vacío con llamada a la acción.
+        if (entries.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.7,
+                  child: EmptyView(
+                    icon: Icons.auto_stories_outlined,
+                    title: 'Aún no dejas ninguna huella',
+                    message:
+                        'Dicta o escribe cómo fue tu día, añade una foto '
+                        'y guardaremos dónde estabas.',
+                    action: FilledButton.icon(
+                      onPressed: _openForm,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Escribir mi primera entrada'),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
-        },
+        }
+
+        // 4) Datos: lista con animación escalonada.
+        return Column(
+          children: [
+            // Recarga en segundo plano: barra fina sobre la lista. Solo
+            // existe mientras carga (un indicador oculto seguiría
+            // animándose y consumiendo batería).
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: isLoading
+                  ? const LinearProgressIndicator(minHeight: 2)
+                  : const SizedBox(height: 2),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  // La primera fila es el resumen con tus huellas.
+                  itemCount: entries.length + 1,
+                  separatorBuilder: (_, index) =>
+                      SizedBox(height: index == 0 ? 16 : 10),
+                  itemBuilder: (context, index) => _StaggeredEntrance(
+                    index: index,
+                    child: index == 0
+                        ? _SummaryBanner(entries: entries)
+                        : EntryCard(
+                            entry: entries[index - 1],
+                            onTap: () => _openDetail(entries[index - 1]),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Resumen al inicio de la lista: saludo según la hora y tus huellas
+/// (recuerdos, lugares y fotos).
+class _SummaryBanner extends StatelessWidget {
+  const _SummaryBanner({required this.entries});
+
+  final List<DiaryEntry> entries;
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Buenos días';
+    if (hour < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final places = entries.where((entry) => entry.hasLocation).length;
+    final photos = entries.fold<int>(
+      0,
+      (sum, entry) => sum + entry.imagePaths.length,
+    );
+    String plural(int n, String one, String many) =>
+        '$n ${n == 1 ? one : many}';
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            scheme.primary,
+            Color.lerp(scheme.primary, Colors.black, 0.3)!,
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tus huellas',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_greeting()}, ¿qué huella dejarás hoy?',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Stat(
+                  icon: Icons.auto_stories,
+                  label: plural(entries.length, 'recuerdo', 'recuerdos'),
+                ),
+                _Stat(
+                  icon: Icons.place,
+                  label: plural(places, 'lugar', 'lugares'),
+                ),
+                _Stat(
+                  icon: Icons.photo_camera,
+                  label: plural(photos, 'foto', 'fotos'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
