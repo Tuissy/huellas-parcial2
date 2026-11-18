@@ -44,5 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Archivo intermedio del generador del reporte PDF
-docs/.reporte_renderizado.html
+# Archivos temporales de Word mientras un documento está abierto
+~$*

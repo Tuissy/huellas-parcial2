@@ -54,14 +54,10 @@ flutter test         # 33 pruebas: modelo, SQLite, casos de uso, dictado y naveg
 Para probar el bloqueo biométrico en el emulador, primero registra un PIN y una huella en
 *Ajustes → Seguridad* del dispositivo. El dictado y los mosaicos del mapa necesitan internet.
 
-### Regenerar el reporte PDF
+### Reporte técnico
 
-El reporte se escribe en `docs/reporte_tecnico.html` (diagramas en Mermaid). Para volver a
-generar el PDF (requiere Google Chrome y conexión la primera vez):
-
-```bash
-python3 docs/build_pdf.py
-```
+El reporte se edita en Word: [`docs/Reporte_Tecnico_Huellas.docx`](docs/Reporte_Tecnico_Huellas.docx).
+El PDF se exporta desde Word con *Archivo → Guardar como → PDF*.
 
 ## Permisos
 
