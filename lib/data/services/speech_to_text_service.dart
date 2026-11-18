@@ -18,11 +18,25 @@ class SpeechToTextService implements SpeechService {
   SpeechToTextService(this._permissions, {stt.SpeechToText? speech})
     : _speech = speech ?? stt.SpeechToText();
 
+  /// Tiempo para empezar a hablar después de tocar el micrófono. Es más
+  /// largo que la pausa normal porque el motor tarda en detectar la voz.
+  static const Duration _waitForFirstWords = Duration(seconds: 10);
+
+  /// Silencio que cierra el dictado una vez que ya se dijo algo.
+  static const Duration _pauseAfterSpeech = Duration(seconds: 5);
+
+  /// Variantes de español en orden de preferencia: México primero y luego
+  /// el español latinoamericano, más parecido al acento local que es-ES.
+  static const List<String> _preferredLocales = ['es_mx', 'es_us', 'es_419'];
+
   final PermissionService _permissions;
   final stt.SpeechToText _speech;
 
   bool _initialized = false;
   String? _localeId;
+
+  // Si ya se reconocieron palabras en la sesión actual.
+  bool _heardSpeech = false;
 
   // Callbacks de la sesión de escucha activa.
   void Function()? _onStopped;
@@ -49,18 +63,25 @@ class SpeechToTextService implements SpeechService {
     _onError = onError;
     _minLevel = 0;
     _maxLevel = 1;
+    _heardSpeech = false;
 
     try {
       await _speech.listen(
-        onResult: (SpeechRecognitionResult result) =>
-            onResult(result.recognizedWords, result.finalResult),
+        onResult: (SpeechRecognitionResult result) {
+          if (!_heardSpeech && result.recognizedWords.isNotEmpty) {
+            // Ya hay voz: desde aquí basta una pausa corta para terminar.
+            _heardSpeech = true;
+            _speech.changePauseFor(_pauseAfterSpeech);
+          }
+          onResult(result.recognizedWords, result.finalResult);
+        },
         onSoundLevelChange: onSoundLevel == null
             ? null
             : (level) => onSoundLevel(_normalize(level)),
         listenOptions: stt.SpeechListenOptions(
           localeId: _localeId,
           listenFor: const Duration(minutes: 2),
-          pauseFor: const Duration(seconds: 5),
+          pauseFor: _waitForFirstWords,
           partialResults: true,
           cancelOnError: true,
           autoPunctuation: true,
@@ -124,22 +145,22 @@ class SpeechToTextService implements SpeechService {
     _localeId = await _pickSpanishLocale();
   }
 
-  /// Prefiere un idioma español; si no existe usa el del sistema.
+  /// Prefiere español de México o latinoamericano; si no hay ninguno usa
+  /// otra variante de español y, en último caso, el idioma del sistema.
   Future<String?> _pickSpanishLocale() async {
+    String normalize(String id) => id.toLowerCase().replaceAll('-', '_');
     try {
       final locales = await _speech.locales();
-      final spanish = locales.where(
-        (locale) => locale.localeId.toLowerCase().startsWith('es'),
-      );
+      final spanish = locales
+          .where((locale) => normalize(locale.localeId).startsWith('es'))
+          .toList();
       if (spanish.isEmpty) return (await _speech.systemLocale())?.localeId;
-      // Prioridad: México, luego cualquier variante de español.
-      return spanish
-          .firstWhere(
-            (locale) =>
-                locale.localeId.toLowerCase().replaceAll('-', '_') == 'es_mx',
-            orElse: () => spanish.first,
-          )
-          .localeId;
+      for (final preferred in _preferredLocales) {
+        for (final locale in spanish) {
+          if (normalize(locale.localeId) == preferred) return locale.localeId;
+        }
+      }
+      return spanish.first.localeId;
     } catch (error) {
       developer.log('No se pudieron leer los idiomas', error: error);
       return null;
