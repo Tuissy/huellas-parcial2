@@ -48,7 +48,7 @@ Requisitos: Flutter 3.44+ (Dart 3.12) y Android SDK 37 (minSdk 24).
 ```bash
 flutter pub get
 flutter run          # se recomienda un teléfono físico para cámara, voz y GPS
-flutter test         # 19 pruebas: modelo, SQLite, casos de uso y navegación
+flutter test         # 33 pruebas: modelo, SQLite, casos de uso, dictado y navegación
 ```
 
 Para probar el bloqueo biométrico en el emulador, primero registra un PIN y una huella en

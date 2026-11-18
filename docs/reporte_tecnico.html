@@ -36,7 +36,7 @@
   .diagram { border: 1px solid var(--line); border-radius: 8px; padding: 8pt; background: #fff; }
   .diagram svg { width: 100%; max-width: 100% !important; height: auto; max-height: 200mm; }
   .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9pt; margin: 6pt 0 10pt; }
-  .shots.three { grid-template-columns: repeat(3, 1fr); }
+  .shots.three { grid-template-columns: repeat(3, 1fr); max-width: 82%; margin-left: auto; margin-right: auto; }
   .shots figure { margin: 0; }
   .shots img { width: 100%; border-radius: 8px; border: 1px solid var(--line); }
 
@@ -142,7 +142,7 @@ tiempo, y personas con dificultades para teclear (el dictado mejora la accesibil
 <div class="kpis">
   <div class="kpi"><b>56</b><span>archivos Dart en <code>lib/</code></span></div>
   <div class="kpi"><b>4</b><span>capas: core, domain, data, presentation</span></div>
-  <div class="kpi"><b>19</b><span>pruebas automatizadas (todas pasan)</span></div>
+  <div class="kpi"><b>33</b><span>pruebas automatizadas (todas pasan)</span></div>
   <div class="kpi"><b>8</b><span>rutas con nombre</span></div>
 </div>
 
@@ -651,6 +651,11 @@ automáticamente un idioma español: primero <code>es_MX</code> y, si el reconoc
   <li>Resultados parciales en tiempo real, que se agregan al final del texto ya escrito.</li>
   <li>Una espera inicial de <b>10 s</b> para empezar a hablar; en cuanto llegan las primeras palabras, <b>5 s</b> de silencio
       terminan el dictado (o el usuario lo detiene tocando el botón).</li>
+  <li><b>Dictado continuo:</b> el reconocedor de Android escucha <b>una frase por sesión</b> y el plugin tarda hasta 10 s en
+      informar que la sesión terminó (además ignora el texto posterior). Por eso, en cuanto llega una frase final —o el motor
+      deja de reportar volumen— el servicio cierra la sesión y abre otra en 0.4 s, y el texto se sigue agregando. El dictado
+      termina al tocar el botón, tras 5 s de silencio, tras tres sesiones seguidas con sonido pero sin palabras, tras cuatro
+      sesiones seguidas sin audio (el emulador a veces no logra abrir el micrófono de la computadora) o a los 5 minutos.</li>
   <li>Un <b>medidor de nivel de audio</b> normalizado (0–1) y un halo animado: evidencia visual de la captura de audio.</li>
   <li>Errores traducidos ("No se detectó voz", "Se necesita internet"…) sin interrumpir el formulario.</li>
 </ul>
@@ -715,11 +720,12 @@ está corrupta (JSON inválido o un ánimo desconocido), se carga igualmente con
 <!-- ============================== 9. PRUEBAS ============================== -->
 <h2 class="page-break">9. Pruebas y verificación</h2>
 
-<h3>Pruebas automatizadas (<code>flutter test</code>: 19/19 correctas)</h3>
+<h3>Pruebas automatizadas (<code>flutter test</code>: 33/33 correctas)</h3>
 <table>
   <tr><th style="width:36%">Archivo</th><th>Qué verifica</th></tr>
   <tr><td><code>test/data/diary_entry_model_test.dart</code></td><td>Ida y vuelta Map/JSON, rutas como arreglo JSON, coordenadas, datos corruptos.</td></tr>
   <tr><td><code>test/data/sqlite_diary_repository_test.dart</code></td><td>SQLite real en memoria (<code>sqflite_common_ffi</code>): orden, búsqueda, actualizar, borrar, rutas relativas y GPS.</td></tr>
+  <tr><td><code>test/data/speech_to_text_service_test.dart</code></td><td>Dictado con un motor de voz simulado: idioma, espera inicial, cierre inmediato al terminar cada frase, motor que deja de escuchar, reintentos cuando el micrófono no entrega audio, fin por silencio o al detenerlo, errores tardíos de Android y que ningún texto se pierda.</td></tr>
   <tr><td><code>test/domain/save_diary_entry_test.dart</code></td><td>Validación de título, copia de fotos, borrado de fotos quitadas y reversión ante fallos.</td></tr>
   <tr><td><code>test/presentation/navigation_test.dart</code></td><td>Carga con FutureBuilder, lista → detalle → atrás, eliminar y volver, Drawer → Ajustes → atrás.</td></tr>
 </table>
@@ -727,12 +733,17 @@ está corrupta (JSON inválido o un ánimo desconocido), se carga igualmente con
 <h3>Pruebas manuales en el emulador (Pixel 8, Android 17 / API 37)</h3>
 <ul>
   <li>Permiso de cámara negado una vez (SnackBar) y bloqueado (diálogo "Abrir ajustes"); después concedido y foto tomada.</li>
-  <li>Permisos de micrófono y ubicación; dictado en <code>es-ES</code> con indicador de micrófono activo del sistema.</li>
+  <li>Permisos de micrófono y ubicación; dictado en <code>es-US</code> (español latinoamericano) con indicador de micrófono activo del sistema y reanudación automática de la sesión.</li>
   <li>GPS apagado → diálogo con tres opciones; GPS encendido → entrada guardada con coordenadas.</li>
   <li>Galería mediante el selector del sistema, edición (cambio de portada) y verificación de que la foto quitada se borró del disco.</li>
   <li>Reinicio en frío de la app: entradas y fotos siguen disponibles (fila verificada con <code>sqlite3</code>).</li>
   <li>Google Maps se abre con las coordenadas; búsqueda, mapa de recuerdos, tema oscuro y eliminación.</li>
 </ul>
+
+<h3>Prueba en un iPhone físico</h3>
+<p>La app se compiló en modo <i>release</i> y se instaló por cable en un iPhone 16 con iOS 27 (firma automática de Xcode con
+el equipo de desarrollo del alumno). Ahí funciona con el hardware real: micrófono y reconocedor de voz de Apple, GPS y Face ID.
+Para compilar con Xcode 27 se subió la versión mínima de iOS del proyecto de 13 a 15.</p>
 
 <div class="note warn"><b>Defecto encontrado y corregido durante las pruebas.</b> Tres pantallas recargaban sus datos con
 <code>setState(() =&gt; _future = _load())</code>. La función flecha <i>devuelve</i> el Future y, en modo debug, Flutter lanza una aserción.
@@ -743,7 +754,7 @@ recarga a una microtarea. Se agregó una prueba de regresión que falla con el d
 <!-- ============================== 10. EJECUCIÓN ============================== -->
 <h2>10. Ejecución, limitaciones y trabajo futuro</h2>
 <pre>flutter pub get
-flutter test                 # 19 pruebas
+flutter test                 # 33 pruebas
 flutter run                  # emulador o teléfono Android (recomendado: dispositivo físico)</pre>
 <p><b>Requisitos:</b> Flutter 3.44 (Dart 3.12), Android SDK 37 para compilar (minSdk 24). Para probar la biometría en el emulador hay
 que registrar un PIN y una huella en <i>Ajustes → Seguridad</i>. El dictado y los mosaicos del mapa requieren internet; el
