@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/di/app_dependencies.dart';
+import 'core/theme/app_scroll_behavior.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/controllers/settings_controller.dart';
 import 'presentation/routes/app_router.dart';
@@ -52,6 +53,7 @@ class _HuellasAppState extends State<HuellasApp> {
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: settings.themeMode,
+          scrollBehavior: const AppScrollBehavior(),
           locale: const Locale('es'),
           supportedLocales: const [Locale('es'), Locale('en')],
           localizationsDelegates: GlobalMaterialLocalizations.delegates,

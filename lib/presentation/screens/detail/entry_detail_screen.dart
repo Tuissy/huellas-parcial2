@@ -155,7 +155,6 @@ class _EntryDetailScreenState extends State<EntryDetailScreen>
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            stretch: true,
             backgroundColor: entry.mood.color,
             foregroundColor: Colors.white,
             actions: [
