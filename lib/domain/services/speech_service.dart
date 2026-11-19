@@ -1,3 +1,7 @@
+// Capa de dominio: interfaz del dictado por voz. La implementa
+// SpeechToTextService con el paquete speech_to_text; las pantallas
+// solo conocen esta interfaz y las pruebas usan FakeSpeechService.
+// typedef: da un nombre corto al tipo de función que recibe el texto.
 /// Callback con el texto reconocido. [isFinal] indica que el motor terminó
 /// de procesar la frase.
 typedef SpeechResultCallback =
@@ -5,8 +9,12 @@ typedef SpeechResultCallback =
 
 /// Dictado por voz: captura audio del micrófono y lo transcribe a texto.
 abstract interface class SpeechService {
+  /// Indica si el micrófono está escuchando en este momento.
   bool get isListening;
 
+  // Los parámetros son funciones (callbacks) que el servicio llama
+  // cuando hay texto nuevo, cambia el volumen, termina la escucha o
+  // ocurre un error. Solo onResult es obligatorio.
   /// Inicia la captura de audio y la transcripción.
   ///
   /// * [onResult] recibe resultados parciales y finales.

@@ -18,25 +18,36 @@ import '../../widgets/state_views.dart';
 class EntriesMapScreen extends StatefulWidget {
   const EntriesMapScreen({super.key});
 
+  // Crea el objeto State, que guarda lo que cambia en esta pantalla.
   @override
   State<EntriesMapScreen> createState() => _EntriesMapScreenState();
 }
 
+/// Estado del mapa de recuerdos.
+///
+/// También usa RouteAwareRefresh (RouteAware): al volver a esta pantalla
+/// se recargan los marcadores, por ejemplo si se borró una entrada.
 class _EntriesMapScreenState extends State<EntriesMapScreen>
     with RouteAwareRefresh {
+  // Future con las entradas que tienen ubicación; lo usa el FutureBuilder.
   Future<List<DiaryEntry>>? _future;
 
+  // Primera carga: el operador ??= evita repetir la consulta si este
+  // método se llama más de una vez.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _future ??= _load();
   }
 
+  /// Trae todas las entradas y se queda solo con las que tienen
+  /// ubicación GPS, porque las demás no se pueden poner en el mapa.
   Future<List<DiaryEntry>> _load() async {
     final entries = await AppScope.of(context).diaryRepository.getAll();
     return entries.where((entry) => entry.hasLocation).toList();
   }
 
+  // RouteAware: recargar al volver a la pantalla.
   @override
   void onReturnToScreen() => _reload();
 
@@ -48,12 +59,16 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
     });
   }
 
+  /// Al tocar un marcador se abre una hoja desde abajo
+  /// (showModalBottomSheet) con un resumen de la entrada.
   void _showPreview(DiaryEntry entry) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => _EntryPreviewSheet(
         entry: entry,
+        // Botón "Ver entrada": primero cierra la hoja y luego abre el
+        // detalle con una ruta con nombre, pasando la entrada.
         onOpen: () {
           Navigator.pop(sheetContext);
           Navigator.pushNamed(context, AppRoutes.entryDetail, arguments: entry);
@@ -62,18 +77,23 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
     );
   }
 
+  // Scaffold con AppBar y Drawer; el body depende del FutureBuilder.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Mapa de recuerdos')),
+      // Menú lateral compartido, con "Mapa" marcado como la opción actual.
       drawer: const AppDrawer(currentRoute: AppRoutes.map),
+      // FutureBuilder con sus estados: cargando, error, vacío y datos.
       body: FutureBuilder<List<DiaryEntry>>(
         future: _future,
         builder: (context, snapshot) {
+          // Cargando por primera vez: CircularProgressIndicator.
           if (snapshot.connectionState == ConnectionState.waiting &&
               !snapshot.hasData) {
             return const LoadingView(message: 'Ubicando tus recuerdos…');
           }
+          // Error: mensaje amigable y botón para reintentar la carga.
           if (snapshot.hasError) {
             final error = snapshot.error;
             return ErrorView(
@@ -83,6 +103,7 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
               onRetry: _reload,
             );
           }
+          // Vacío: todavía no hay entradas guardadas con ubicación.
           final entries = snapshot.data ?? const <DiaryEntry>[];
           if (entries.isEmpty) {
             return const EmptyView(
@@ -92,18 +113,25 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
                   'Las entradas que guardes con ubicación GPS aparecerán aquí.',
             );
           }
+          // Datos: se dibuja el mapa con un marcador por entrada.
           return _buildMap(entries);
         },
       ),
     );
   }
 
+  /// Mapa interactivo con flutter_map y OpenStreetMap: se puede mover y
+  /// hacer zoom, y cada entrada aparece como un marcador.
   Widget _buildMap(List<DiaryEntry> entries) {
+    // Convierte la ubicación de cada entrada en coordenadas LatLng.
     final points = [
       for (final entry in entries)
         LatLng(entry.location!.latitude, entry.location!.longitude),
     ];
 
+    // Encuadre inicial: con un solo punto se centra en él con zoom 15;
+    // con varios, la cámara se ajusta para que se vean todos (CameraFit),
+    // con un margen de 64 y sin acercarse más allá del zoom 16.
     final options = points.length == 1
         ? MapOptions(initialCenter: points.first, initialZoom: 15)
         : MapOptions(
@@ -114,10 +142,13 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
             ),
           );
 
+    // El mapa se arma con capas apiladas, de abajo hacia arriba.
     return FlutterMap(
       options: options,
       children: [
+        // Capa 1: las imágenes (tiles) del mapa de OpenStreetMap.
         buildOsmTileLayer(),
+        // Capa 2: un marcador por cada entrada con ubicación.
         MarkerLayer(
           markers: [
             for (var i = 0; i < entries.length; i++)
@@ -125,8 +156,11 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
                 point: points[i],
                 width: 48,
                 height: 48,
+                // Al tocar el marcador se abre la vista previa.
                 child: GestureDetector(
                   onTap: () => _showPreview(entries[i]),
+                  // Círculo con el color del estado de ánimo, borde
+                  // blanco y sombra para que resalte sobre el mapa.
                   child: Container(
                     decoration: BoxDecoration(
                       color: entries[i].mood.color,
@@ -137,6 +171,7 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
                       ],
                     ),
                     alignment: Alignment.center,
+                    // Dentro va el emoji del estado de ánimo.
                     child: Text(
                       entries[i].mood.emoji,
                       style: const TextStyle(fontSize: 20),
@@ -146,30 +181,41 @@ class _EntriesMapScreenState extends State<EntriesMapScreen>
               ),
           ],
         ),
+        // Capa 3: créditos de OpenStreetMap, que exige su licencia.
         buildOsmAttribution(),
       ],
     );
   }
 }
 
+/// Contenido de la hoja inferior: miniatura, título, fecha, el inicio
+/// del texto y un botón para abrir la entrada completa.
 class _EntryPreviewSheet extends StatelessWidget {
   const _EntryPreviewSheet({required this.entry, required this.onOpen});
 
+  // Entrada que se resume y acción del botón "Ver entrada".
   final DiaryEntry entry;
   final VoidCallback onOpen;
 
+  // Dibuja la vista previa de la entrada.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // SafeArea evita que el contenido quede bajo las barras del sistema.
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        // Columna del tamaño mínimo, para que la hoja no ocupe toda la
+        // pantalla.
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
+                // Miniatura de 72 x 72: la primera foto de la entrada o,
+                // si no tiene, el color y emoji del ánimo. cacheWidth
+                // reduce el tamaño de la imagen en memoria.
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: SizedBox.square(
@@ -183,6 +229,9 @@ class _EntryPreviewSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
+                // Textos a la derecha: título en una línea, fecha
+                // (por ejemplo "Hoy · 10:30") y dos líneas del contenido.
+                // Expanded les da el espacio que sobra en la fila.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,6 +259,7 @@ class _EntryPreviewSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            // Botón para ir al detalle completo de la entrada.
             FilledButton.icon(
               onPressed: onOpen,
               icon: const Icon(Icons.open_in_new),

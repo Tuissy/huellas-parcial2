@@ -1,3 +1,8 @@
+// Capa de dominio: interfaz de cámara y galería. La implementa
+// ImagePickerMediaService (capa de datos) con el paquete image_picker;
+// las pruebas usan FakeMediaService.
+// Enum propio para indicar de dónde sale la foto, sin depender del
+// paquete externo.
 /// Origen de una foto.
 enum PhotoSource { camera, gallery }
 

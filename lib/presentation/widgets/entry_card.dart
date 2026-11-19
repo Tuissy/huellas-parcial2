@@ -1,3 +1,5 @@
+// ARCHIVO: entry_card.dart. Tarjeta que representa una entrada en la lista
+// principal y en los resultados de búsqueda.
 import 'package:flutter/material.dart';
 
 import '../../core/utils/date_formatter.dart';
@@ -10,6 +12,9 @@ import 'mood_style.dart';
 /// impresa. La miniatura está envuelta en un [Hero] que se anima hacia la
 /// cabecera de la pantalla de detalle.
 class EntryCard extends StatelessWidget {
+  // Recibe la entrada y la acción al tocarla. La tarjeta no navega por sí
+  // sola: la pantalla decide qué hacer en onTap. Así el mismo widget sirve en
+  // la lista y en la búsqueda.
   const EntryCard({super.key, required this.entry, required this.onTap});
 
   final DiaryEntry entry;
@@ -17,10 +22,14 @@ class EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Leemos el tema y el color del ánimo una sola vez para usarlos en todo el
+    // árbol.
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final moodColor = entry.mood.color;
 
+    // Card con InkWell para el efecto de onda al tocar. IntrinsicHeight hace
+    // que la franja de color mida lo mismo que el contenido de la tarjeta.
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -30,12 +39,19 @@ class EntryCard extends StatelessWidget {
             children: [
               // Franja con el color del estado de ánimo.
               Container(width: 6, color: moodColor),
+              // El resto del ancho es para el contenido: la foto a la izquierda
+              // y los textos a la derecha.
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Concepto: Hero, etiqueta compartida. La miniatura usa
+                      // la misma etiqueta que la cabecera del detalle, por eso
+                      // 'vuela' de una pantalla a la otra. cacheWidth: 300
+                      // carga una versión pequeña de la foto para ahorrar
+                      // memoria.
                       Hero(
                         tag: HeroTags.entryImage(entry.id),
                         child: _PhotoFrame(
@@ -48,10 +64,15 @@ class EntryCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 14),
+                      // Columna de textos: título con emoji, fecha, vista
+                      // previa del contenido y etiquetas.
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Título en una sola línea (con puntos
+                            // suspensivos si es largo) y el emoji del ánimo
+                            // dentro de un círculo de su color.
                             Row(
                               children: [
                                 Expanded(
@@ -77,6 +98,8 @@ class EntryCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 2),
+                            // Fecha relativa ('Hoy', 'Ayer' o la fecha) con el
+                            // DateFormatter de la capa core.
                             Text(
                               DateFormatter.relative(entry.createdAt),
                               style: theme.textTheme.labelMedium?.copyWith(
@@ -84,6 +107,8 @@ class EntryCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 6),
+                            // Vista previa del contenido en máximo dos
+                            // líneas; si no hay texto, se muestra 'Sin texto'.
                             Text(
                               entry.content.isEmpty
                                   ? 'Sin texto'
@@ -93,6 +118,9 @@ class EntryCard extends StatelessWidget {
                               style: theme.textTheme.bodyMedium,
                             ),
                             const SizedBox(height: 8),
+                            // Etiquetas condicionales: 'Con ubicación' si
+                            // tiene GPS y el número de fotos si tiene más de
+                            // una. Wrap las pasa a otra línea si no caben.
                             Wrap(
                               spacing: 6,
                               runSpacing: 6,
@@ -132,6 +160,9 @@ class _PhotoFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Contenedor blanco con bordes redondeados y sombra suave. Dentro,
+    // ClipRRect recorta la foto en un cuadrado de 86 píxeles con las esquinas
+    // redondeadas.
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -162,6 +193,8 @@ class _Meta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Píldora con el color primario suave, un ícono pequeño y el texto.
+    // mainAxisSize.min hace que mida solo lo que ocupa su contenido.
     final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

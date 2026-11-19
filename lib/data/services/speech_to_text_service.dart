@@ -27,6 +27,9 @@ import '../../domain/services/speech_service.dart';
 /// [_maxMutedSessions] sesiones seguidas sin audio o al llegar a
 /// [_maxDictation].
 class SpeechToTextService implements SpeechService {
+  // Implementa la interfaz SpeechService del dominio (inversión de
+  // dependencias). Recibe el servicio de permisos y, para las pruebas, se
+  // le pueden inyectar el objeto SpeechToText y los tiempos de espera.
   SpeechToTextService(
     this._permissions, {
     stt.SpeechToText? speech,
@@ -81,6 +84,7 @@ class SpeechToTextService implements SpeechService {
   /// está escuchando (Android lo hace al terminar cada frase).
   final Duration deafAfter;
 
+  // El motor se inicializa una sola vez; _localeId es el idioma elegido.
   bool _initialized = false;
   String? _localeId;
 
@@ -115,9 +119,12 @@ class SpeechToTextService implements SpeechService {
   double _minLevel = 0;
   double _maxLevel = 1;
 
+  /// Indica si hay un dictado en curso, aunque esté entre dos sesiones.
   @override
   bool get isListening => _active;
 
+  /// Empieza un dictado nuevo: pide permisos, guarda los callbacks de la
+  /// pantalla, reinicia los contadores y abre la primera sesión.
   @override
   Future<void> startListening({
     required SpeechResultCallback onResult,
@@ -127,6 +134,7 @@ class SpeechToTextService implements SpeechService {
   }) async {
     await _ensureReady();
 
+    // Se guardan los callbacks y se reinicia el estado del dictado.
     _onResult = onResult;
     _onSoundLevel = onSoundLevel;
     _onStopped = onStopped;
@@ -140,6 +148,8 @@ class SpeechToTextService implements SpeechService {
     _startedAt = DateTime.now();
     _active = true;
 
+    // try-catch: si el motor no logra abrir la primera sesión, se termina el
+    // dictado y se lanza una AppException con mensaje en español.
     try {
       await _listenSession();
     } catch (error) {
@@ -153,6 +163,8 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  /// El usuario detiene el dictado: se marca inactivo, se cancelan los
+  /// temporizadores y se pide al motor que entregue el texto final.
   @override
   Future<void> stopListening() async {
     _active = false;
@@ -160,6 +172,8 @@ class SpeechToTextService implements SpeechService {
     await _speech.stop();
   }
 
+  /// Cancela el dictado y borra los callbacks: ya no se avisa nada a la
+  /// pantalla.
   @override
   Future<void> cancel() async {
     _active = false;
@@ -174,6 +188,7 @@ class SpeechToTextService implements SpeechService {
   /// Abre una sesión del motor. La primera espera más a que empiece la voz;
   /// las siguientes (reanudaciones) solo toleran una pausa corta.
   Future<void> _listenSession() async {
+    // Se reinicia el estado de la sesión nueva.
     _wordsInSession = false;
     _engineWentDeaf = false;
     _sessionFailed = false;
@@ -182,8 +197,11 @@ class SpeechToTextService implements SpeechService {
     _lastLevelAt = null;
     _firstLevel = null;
     _audioInSession = false;
+    // Tiempo que le queda al dictado completo (el máximo es 5 minutos).
     final remaining = _maxDictation - DateTime.now().difference(_startedAt);
 
+    // Se abre el micrófono con resultados parciales (el texto aparece
+    // mientras se habla), puntuación automática y modo dictado.
     await _speech.listen(
       onResult: _handleResult,
       onSoundLevelChange: _handleSoundLevel,
@@ -199,9 +217,11 @@ class SpeechToTextService implements SpeechService {
         listenMode: stt.ListenMode.dictation,
       ),
     );
+    // Se empieza a vigilar si el motor deja de escuchar por su cuenta.
     _watchForDeafEngine();
   }
 
+  /// Recibe cada texto reconocido (parcial o final) y lo pasa a la pantalla.
   void _handleResult(SpeechRecognitionResult result) {
     final words = result.recognizedWords;
     if (words.isNotEmpty) {
@@ -210,6 +230,7 @@ class SpeechToTextService implements SpeechService {
       _heardSpeech = true;
       _wordsInSession = true;
     }
+    // Se guarda el texto parcial por si la sesión se cierra sin confirmarlo.
     _pendingPartial = result.finalResult ? '' : words;
     _onResult?.call(words, result.finalResult);
 
@@ -220,6 +241,8 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  /// Recibe el volumen del micrófono. Sirve para animar el indicador y
+  /// para saber si llega audio real (el volumen cambia respecto al primero).
   void _handleSoundLevel(double level) {
     _lastLevelAt = DateTime.now();
     final first = _firstLevel ??= level;
@@ -253,6 +276,7 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  /// Cambia la pausa larga inicial por la corta una vez que ya hay voz.
   void _shortenPause() {
     // El plugin lanza una excepción si la sesión ya se cerró.
     if (!_speech.isListening) return;
@@ -263,6 +287,8 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  /// Recibe los cambios de estado del motor (escuchando, no escuchando,
+  /// terminado) y decide cuándo la sesión se da por cerrada.
   void _handleStatus(String status) {
     developer.log('Estado del dictado: $status');
     if (status == stt.SpeechToText.listeningStatus) return;
@@ -298,6 +324,8 @@ class SpeechToTextService implements SpeechService {
     // Sesión "muda": el motor dejó de escuchar sin que el volumen cambiara
     // nunca, es decir, el micrófono no entregó audio.
     final muted = _engineWentDeaf && !_audioInSession;
+    // Contadores: si hubo palabras se reinician; si no, se suma una sesión
+    // muda o una sesión con sonido pero sin palabras.
     if (_wordsInSession) {
       _wordlessSessions = 0;
       _mutedSessions = 0;
@@ -315,11 +343,14 @@ class SpeechToTextService implements SpeechService {
             (muted
                 ? _mutedSessions < _maxMutedSessions
                 : _wordlessSessions < _maxWordlessSessions));
+    // El dictado sigue solo si está activo, la sesión cerró antes de tiempo,
+    // no hubo error y quedan más de 2 segundos antes del máximo.
     final keepGoing =
         _active &&
         closedEarly &&
         !_sessionFailed &&
         _maxDictation - elapsed > const Duration(seconds: 2);
+    // Si no sigue, se termina el dictado (con un aviso si nunca hubo voz).
     if (!keepGoing) {
       if (_active && _engineWentDeaf && !_heardSpeech) {
         // Sin audio del micrófono, o con sonido pero sin palabras.
@@ -329,6 +360,9 @@ class SpeechToTextService implements SpeechService {
       return;
     }
 
+    // Reconocimiento de voz: sesiones encadenadas porque Android escucha una
+    // frase por sesión. Se espera un momento para que el motor libere el
+    // micrófono y se abre una sesión nueva.
     developer.log('Sesión cerrada; el dictado continúa');
     Future<void>.delayed(restartDelay, () async {
       if (!_active) return; // el usuario lo detuvo mientras tanto
@@ -341,6 +375,7 @@ class SpeechToTextService implements SpeechService {
     });
   }
 
+  /// Recibe los errores del motor de voz y decide si mostrar un aviso.
   void _handleError(SpeechRecognitionError error) {
     developer.log('Error de dictado: ${error.errorMsg}');
     // Android a veces informa el error después de cerrar la sesión. Si el
@@ -348,23 +383,29 @@ class SpeechToTextService implements SpeechService {
     // ignora para que no corte la nueva.
     if (_active && _sessionClosed) return;
     _sessionFailed = true;
+    // Si ya se dictó algo, errores como "sin coincidencias" solo indican que
+    // la persona terminó de hablar: no se muestra aviso. Si el error es
+    // permanente, el dictado termina.
     final quiet = _heardSpeech && _quietAfterSpeech.contains(error.errorMsg);
     if (!quiet) _showMessage(_describeError(error.errorMsg));
     if (error.permanent) _finish();
   }
 
+  /// Muestra un aviso en la pantalla, solo uno por dictado.
   void _showMessage(String message) {
     if (_messageShown) return; // un solo aviso por dictado
     _messageShown = true;
     _onError?.call(message);
   }
 
+  /// Termina el dictado completo y avisa a la pantalla.
   void _finish() {
     _active = false;
     _cancelTimers();
     _notifyStopped();
   }
 
+  /// Detiene los temporizadores de respaldo y de vigilancia.
   void _cancelTimers() {
     _endFallback?.cancel();
     _endFallback = null;
@@ -372,6 +413,8 @@ class SpeechToTextService implements SpeechService {
     _deafWatch = null;
   }
 
+  /// Avisa que el dictado terminó. El callback se borra antes de llamarlo
+  /// para que el aviso llegue una sola vez.
   void _notifyStopped() {
     final callback = _onStopped;
     _onStopped = null;
@@ -380,6 +423,8 @@ class SpeechToTextService implements SpeechService {
 
   /// Solicita permisos e inicializa el motor una única vez.
   Future<void> _ensureReady() async {
+    // Primero el permiso del micrófono y luego el de reconocimiento de voz.
+    // Permiso negado vs bloqueado: se indica en la excepción.
     final mic = await _permissions.request(AppPermission.microphone);
     if (mic != PermissionStatusResult.granted) {
       throw PermissionException(
@@ -395,6 +440,8 @@ class SpeechToTextService implements SpeechService {
       );
     }
 
+    // El motor se inicializa una sola vez y se registran los callbacks de
+    // error y de estado. Si falla, se lanza una AppException en español.
     if (_initialized) return;
     try {
       _initialized = await _speech.initialize(
@@ -411,12 +458,14 @@ class SpeechToTextService implements SpeechService {
         'El reconocimiento de voz no está disponible en este dispositivo.',
       );
     }
+    // Se elige el idioma español para el dictado.
     _localeId = await _pickSpanishLocale();
   }
 
   /// Prefiere español de México o latinoamericano; si no hay ninguno usa
   /// otra variante de español y, en último caso, el idioma del sistema.
   Future<String?> _pickSpanishLocale() async {
+    // Normaliza el código del idioma: "es-MX" y "es_mx" quedan iguales.
     String normalize(String id) => id.toLowerCase().replaceAll('-', '_');
     try {
       final locales = await _speech.locales();
@@ -436,6 +485,8 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  /// Lleva el volumen a una escala de 0 a 1 según el mínimo y el máximo
+  /// observados, porque cada plataforma usa una escala distinta.
   double _normalize(double level) {
     _minLevel = math.min(_minLevel, level);
     _maxLevel = math.max(_maxLevel, level);
@@ -444,6 +495,7 @@ class SpeechToTextService implements SpeechService {
     return ((level - _minLevel) / range).clamp(0.0, 1.0);
   }
 
+  /// Traduce el código técnico del motor de voz a un mensaje en español.
   String _describeError(String code) {
     switch (code) {
       case 'error_no_match':

@@ -1,3 +1,6 @@
+// Capa de dominio: interfaz para abrir mapas externos. La implementa
+// UrlMapsLauncher (capa de datos) con el paquete url_launcher, y las
+// pruebas usan FakeMapsLauncher.
 import '../entities/geo_location.dart';
 
 /// Abre una aplicación de mapas externa (Google Maps) en unas coordenadas.

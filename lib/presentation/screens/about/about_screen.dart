@@ -7,6 +7,8 @@ import '../../widgets/app_drawer.dart';
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
+  // Funciones principales de la app guardadas como registros (records
+  // de Dart 3): ícono, título y descripción. Es const porque no cambia.
   static const _features = [
     (
       Icons.photo_camera_outlined,
@@ -35,15 +37,19 @@ class AboutScreen extends StatelessWidget {
     ),
   ];
 
+  // Pantalla estática (StatelessWidget): Scaffold con AppBar, Drawer y
+  // una lista desplazable con la información.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Acerca de')),
+      // Menú lateral compartido, con "Acerca de" como opción actual.
       drawer: const AppDrawer(currentRoute: AppRoutes.about),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // Logo: ícono de una huella dentro de un círculo.
           Center(
             child: CircleAvatar(
               radius: 44,
@@ -56,6 +62,7 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // Nombre de la app y su versión.
           Text(
             'Huellas',
             textAlign: TextAlign.center,
@@ -69,6 +76,7 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          // Tarjeta que explica qué problema resuelve la app.
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -92,6 +100,8 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // Un ListTile por cada función. El for dentro de la lista
+          // desarma cada registro en ícono, título y descripción.
           for (final (icon, title, subtitle) in _features)
             ListTile(
               leading: Icon(icon, color: theme.colorScheme.primary),
@@ -99,6 +109,7 @@ class AboutScreen extends StatelessWidget {
               subtitle: Text(subtitle),
             ),
           const SizedBox(height: 12),
+          // Crédito de los mapas, que pide la licencia de OpenStreetMap.
           Text(
             'Mapas © colaboradores de OpenStreetMap.',
             textAlign: TextAlign.center,

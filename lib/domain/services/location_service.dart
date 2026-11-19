@@ -1,3 +1,6 @@
+// Capa de dominio: interfaz del GPS. Solo usa la entidad GeoLocation y
+// nunca el paquete geolocator; ese detalle queda en la capa de datos
+// (GeolocatorLocationService). Las pruebas usan FakeLocationService.
 import '../entities/geo_location.dart';
 
 /// Acceso al GPS del dispositivo.

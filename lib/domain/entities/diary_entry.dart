@@ -1,3 +1,5 @@
+// Capa de dominio. Entidad del dominio: Dart puro, sin Flutter ni
+// paquetes externos; solo importa otras piezas del propio dominio.
 import 'geo_location.dart';
 import 'mood.dart';
 
@@ -7,6 +9,8 @@ import 'mood.dart';
 /// SQLite ni de Flutter, lo que permite probarla y reutilizarla (capa de
 /// dominio independiente de la infraestructura).
 class DiaryEntry {
+  // Constructor const con parámetros nombrados. El id y la ubicación
+  // son opcionales y la lista de fotos empieza vacía por defecto.
   const DiaryEntry({
     this.id,
     required this.title,
@@ -21,6 +25,9 @@ class DiaryEntry {
   /// Identificador asignado por la base de datos. Es `null` mientras la
   /// entrada no se ha guardado.
   final int? id;
+  // Datos principales: título, texto, estado de ánimo y fechas de
+  // creación y de última edición. Todos los campos son final, por eso
+  // la entidad es inmutable.
   final String title;
   final String content;
   final Mood mood;
@@ -33,6 +40,8 @@ class DiaryEntry {
   /// Ubicación GPS capturada al guardar la entrada.
   final GeoLocation? location;
 
+  // Getters calculados (no se guardan, se calculan al pedirlos): si la
+  // entrada es nueva, si tiene fotos o ubicación, y cuál es la portada.
   bool get isNew => id == null;
   bool get hasImages => imagePaths.isNotEmpty;
   bool get hasLocation => location != null;
@@ -53,6 +62,9 @@ class DiaryEntry {
     GeoLocation? location,
     bool clearLocation = false,
   }) {
+    // Cada campo toma el valor nuevo si se pasó, o conserva el actual
+    // con el operador ??. La ubicación además se puede borrar con
+    // clearLocation.
     return DiaryEntry(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -65,6 +77,7 @@ class DiaryEntry {
     );
   }
 
+  // Representación en texto, útil para depurar.
   @override
   String toString() => 'DiaryEntry(id: $id, title: $title)';
 }

@@ -1,3 +1,6 @@
+// Capa de dominio: interfaz para guardar fotos en disco. La implementa
+// LocalImageStorageService (capa de datos); en las pruebas se usa
+// FakeImageStorage, que no escribe archivos reales.
 /// Almacenamiento permanente de las fotos del diario.
 ///
 /// Las imágenes que entrega la cámara o la galería viven en carpetas
